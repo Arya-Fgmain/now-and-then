@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import * 
 from tkinter import filedialog
+from PIL import Image, ImageTk
 import cv2
 import numpy as np
 #requires installing the pillow library to run
@@ -17,7 +18,33 @@ def get_file(label):
     
     FILE_PATHS = filedialog.askopenfilenames(title="select an image to be altered", filetypes=[("PNG files", "*.png")])
     #label.config(text=FILE_PATHS)
+    #open an opencv file
+    
+    
+    image = cv2.imread(FILE_PATHS[0])
+    #perform any operations that we want on the image here
+    
+    
+    
+    #convert it into rgb
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #convert to PIl image
+    pil_image = Image.fromarray(image)
+    #open with tkinter
+    tk_image = ImageTk.PhotoImage(pil_image)
+    #display in label
+    label.config(image = tk_image)
+    label.image = tk_image  # Keep a reference
+    
+    
+    
+    
+    
     Im_image.config(file=FILE_PATHS[0])
+    
+    
+    
+    
     #upadtes the scale to have as many values as there are pixels in the width
     S_scale.config(to=Im_image.width)
     print(FILE_PATHS)
@@ -47,6 +74,9 @@ def shift_right():
         Im_image.config(file=FILE_PATHS[CURRENT_FILE])
         
         
+        
+        
+
 
 #creates the main window to be used
 base = Tk()
@@ -69,7 +99,8 @@ B_flipRight = Button(base, text="-->", command=shift_right)
 #SB_vertical_image.config(command=L_image.)
 
 #organizes the GUI items and places them in the interface
-L_image.grid(row=0,column=0, columnspan=3)
+#L_image.grid(row=0,column=0, columnspan=3)
+L_fileName.grid(row=0,column=0, columnspan=3)
 #S_scale.grid(row=1,column=0, columnspan=2) not currently used
 
 B_flipLeft.grid(row = 2, column=0, sticky="W")
