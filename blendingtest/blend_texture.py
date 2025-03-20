@@ -9,7 +9,9 @@ img2 = cv2.imread("papertexture.jpg")
 img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
 
 # Blend images with weights (alpha=0.6, beta=0.4)
-blended = cv2.addWeighted(img1, 0.5, img2, 0.5, 0)
+
+#will have to try with different base textures and different alpha betas
+blended = cv2.addWeighted(img1, 0.8, img2, 0.2, 0)
 
 # Show and save the result
 cv2.imshow("Blended Image", blended)
