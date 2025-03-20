@@ -24,8 +24,6 @@ def get_file(label):
     image = cv2.imread(FILE_PATHS[0])
     #perform any operations that we want on the image here
     
-    
-    
     #convert it into rgb
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     #convert to PIl image
@@ -87,7 +85,7 @@ base.config()
 
 #creates the UI objects
 L_fileName = Label(base, text = "")
-B_getPath = Button(base, text= "Choose image", command=lambda: get_file(L_fileName))
+B_getPath = Button(base, text= "Choose image", command=lambda: get_file(L_image))
 Im_image = PhotoImage()
 L_image = Label(base, image=Im_image)
 S_scale = Scale(base, from_=0, to= 255)
@@ -95,12 +93,41 @@ B_flipLeft = Button(base, text="<--", command=shift_left)
 B_flipRight = Button(base, text="-->", command=shift_right)
 
 
+
+ #create canvas
+canvas = Canvas(base)
+h_scrollbar = Scrollbar(base, orient="horizontal", command=canvas.xview)
+v_scrollbar = Scrollbar(base, orient="vertical", command=canvas.yview)
+
+canvas.configure(xscrollcommand=h_scrollbar.set, yscrollcommand=v_scrollbar.set)
+
+
+# Create a frame inside the canvas to hold the image
+frame = Frame(canvas)
+canvas.create_window((0, 0), window=frame, anchor="nw")
+
+L_image = Label(frame)
+
+# Update the scroll region based on image size
+def update_scroll_region():
+    canvas.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
+    
+update_scroll_region()    
+
+h_scrollbar.pack(side="bottom", fill="x")
+v_scrollbar.pack(side="right", fill="y")
+
+
+
+
 #SB_vertical_image = Scrollbar(  base, orient='vertical')
 #SB_vertical_image.config(command=L_image.)
 
 #organizes the GUI items and places them in the interface
 #L_image.grid(row=0,column=0, columnspan=3)
-L_fileName.grid(row=0,column=0, columnspan=3)
+#L_fileName.grid(row=0,column=0, columnspan=3)
+canvas.grid(row=0,column=0, columnspan=3)
 #S_scale.grid(row=1,column=0, columnspan=2) not currently used
 
 B_flipLeft.grid(row = 2, column=0, sticky="W")
