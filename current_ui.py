@@ -7,7 +7,9 @@ import numpy as np
 FILE_PATHS = []
 
 # Load the image
-image_path = ".\sampleImages\slimefoot.jpg"  # Replace with your image path
+image_path = ".\sampleImages\slimefoot.jpg"  # Default image path
+paper_texture = cv2.imread(".\sampleImages\pap.png") # Default paper texture
+paper_texture = cv2.cvtColor(paper_texture, cv2.COLOR_BGR2RGB) 
 
 original_image = cv2.imread(image_path)
 original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
@@ -45,7 +47,7 @@ label.grid(row=0, column=0)
 def update_image(_=None):
     #Update the displayed image based on zoom and brightness slider values.
     zoom_factor = zoom_slider.get()
-    brightness_factor = brightness_slider.get()
+    blending_factor = blending_slider.get()
 
 
     #perfrom your opencv adjustments to the image here, using orignal_image as the base
@@ -57,10 +59,14 @@ def update_image(_=None):
     resized = cv2.resize(original_image, (width, height))
 
     # Adjust brightness
-    brightened = np.clip(resized * brightness_factor, 0, 255).astype(np.uint8)
-
+    #brightened = np.clip(resized * brightness_factor, 0, 255).astype(np.uint8)
+    
+    # Blend paper texture
+    resized_paper = cv2.resize(paper_texture, (resized.shape[1], resized.shape[0]))
+    blended = cv2.addWeighted(resized, 1 - blending_factor, resized_paper, blending_factor, 0)
+    
     # Convert to Tkinter format
-    pil_image = Image.fromarray(brightened)
+    pil_image = Image.fromarray(blended)
     tk_image = ImageTk.PhotoImage(pil_image)
 
     # Update label
@@ -91,10 +97,10 @@ zoom_slider = tk.Scale(root, from_=0.5, to=2.0, resolution=0.1, orient="horizont
 zoom_slider.set(1.0)  # Default value
 zoom_slider.grid(row=1, column=0, sticky="ew")
 
-# Create Brightness Slider
-brightness_slider = tk.Scale(root, from_=0.5, to=2.0, resolution=0.1, orient="horizontal", label="Brightness", command=update_image)
-brightness_slider.set(1.0)  # Default value
-brightness_slider.grid(row=2, column=0, sticky="ew")
+# Create blending Slider
+blending_slider = tk.Scale(root, from_=0.0, to=1.0, resolution=0.1, orient="horizontal", label="Texture Strength", command=update_image)
+blending_slider.set(0.0)  # Default value
+blending_slider.grid(row=2, column=0, sticky="ew")
 
 # Make the window layout expandable
 root.grid_rowconfigure(0, weight=1)
