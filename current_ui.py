@@ -102,6 +102,36 @@ blending_slider = tk.Scale(root, from_=0.0, to=1.0, resolution=0.1, orient="hori
 blending_slider.set(0.0)  # Default value
 blending_slider.grid(row=2, column=0, sticky="ew")
 
+# Create texture drop down
+
+texture_options = [
+    "Crumpled Paper",
+    "News Print",
+    "Pulp Print"
+]
+
+#add and change filenames of textures here
+texture_filenames = [
+    ".\sampleImages\pap.png",
+    ".\sampleImages\pap.png",
+    ".\sampleImages\papertexture.jpg"
+]
+
+
+def change_texture(selected_texture):
+    index = texture_options.index(selected_texture)
+    global paper_texture
+    paper_texture = cv2.imread(texture_filenames[index]) # Default paper texture
+    paper_texture = cv2.cvtColor(paper_texture, cv2.COLOR_BGR2RGB)
+    update_image()
+    
+    
+
+selected_texture = tk.StringVar()
+selected_texture.set( texture_options[0] ) 
+texture_dropdown = tk.OptionMenu(root, selected_texture, *texture_options, command=change_texture )
+texture_dropdown.grid(row=0, column=1)
+
 # Make the window layout expandable
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
