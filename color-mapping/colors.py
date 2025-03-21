@@ -133,18 +133,29 @@ plot_palette(old_colors_awb, 'old_colors.png')
 
 # TODO: removing black and white layers as they has high IOU with many other layers, make this automatic as its hard-coded right now
 old_layers_minus_bw = np.delete(old_layers, [1,3], axis=0)
+old_colors_awb_match = np.delete(old_colors_awb, [1,3], axis=0)
+original_old_colors_match = np.delete(old_colors, [1,3], axis=0)
+
+
 
 match_indices = np.array([find_matching_old_color(layer, old_layers_minus_bw) for layer in new_layers])
-match_colors = np.array([old_colors_awb[ind] for ind in match_indices])
+
+# match to tonemapped colors
+match_colors = np.array([old_colors_awb_match[ind] for ind in match_indices])
+
+# match to original colors
+# match_colors = np.array([original_old_colors_match[ind] for ind in match_indices])
 
 
 # TODO adding white & black colors manually for now (gotta know indices of black and white in both palettes), make this automatic
 
 # match_colors[0] = [1,1,1]
 # match_colors[1] = [0,0,0]
-
 match_colors[0] = old_colors_awb[1] # better: set black and white to the tonemapped black and white colors of the old scan
 match_colors[1] = old_colors_awb[3]
+
+# match_colors[0] = old_colors[1] 
+# match_colors[1] = old_colors[3]
 
 new_layers_recolored = []
 
@@ -181,4 +192,4 @@ output = np.clip(
     (output*255).astype(np.uint8), 0, 255
 )
 out = Image.fromarray(output, mode='RGB')
-out.save('sample_new3.png')
+out.save('sample_new4.png')
