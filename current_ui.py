@@ -56,17 +56,24 @@ def update_image(_=None):
     # Resize the image based on zoom
     width = int(original_image.shape[1] * zoom_factor)
     height = int(original_image.shape[0] * zoom_factor)
-    resized = cv2.resize(original_image, (width, height))
+    output_image = cv2.resize(original_image, (width, height))
 
     # Adjust brightness
     #brightened = np.clip(resized * brightness_factor, 0, 255).astype(np.uint8)
     
     # Blend paper texture
-    resized_paper = cv2.resize(paper_texture, (resized.shape[1], resized.shape[0]))
-    blended = cv2.addWeighted(resized, 1 - blending_factor, resized_paper, blending_factor, 0)
+    ##blended = cv2.addWeighted(resized, 1 - blending_factor, resized_paper, blending_factor, 0)
+    output_image = add_paper_texture(output_image,paper_texture)
     
+    
+    # Compare with original
+    if compare_flag.get() == 1:
+        output_image = np.hstack((cv2.resize(original_image, (width, height)), output_image))
+    
+    
+    ##################################### end of cv2 processing
     # Convert to Tkinter format
-    pil_image = Image.fromarray(blended)
+    pil_image = Image.fromarray(output_image)
     tk_image = ImageTk.PhotoImage(pil_image)
 
     # Update label
@@ -79,7 +86,23 @@ def update_image(_=None):
 
 # Create get file button
 getPath_button = tk.Button(root, text= "Choose image", command=lambda: get_file())
-getPath_button.grid(row=1, column=1, sticky="ns", rowspan=2)
+getPath_button.grid(row=2, column=1, sticky="ns", rowspan=2)
+
+
+# Adds paper texture to the image
+def add_paper_texture(source: np.ndarray, texture: np.ndarray):
+    source = np.array(source)
+    texture = np.array(texture)
+    texture = cv2.resize(texture, (source.shape[1], source.shape[0]))
+
+    norm_source = source / 255.0
+    norm_texture = texture / 255.0
+
+    norm_target = norm_source * norm_texture
+    target = (norm_target * 255).astype(np.uint8)
+
+    return target
+
 
 def get_file():
     global FILE_PATHS
@@ -89,6 +112,7 @@ def get_file():
     global original_image 
     global current_image
     original_image = cv2.imread(FILE_PATHS[0])
+    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB) 
     current_image = original_image.copy()
     update_image()
 
@@ -102,21 +126,23 @@ blending_slider = tk.Scale(root, from_=0.0, to=1.0, resolution=0.1, orient="hori
 blending_slider.set(0.0)  # Default value
 blending_slider.grid(row=2, column=0, sticky="ew")
 
-# Create texture drop down
+# Create Compare with original button
+compare_flag = tk.IntVar(root, 0)
+compare_checkbutton = tk.Checkbutton(root, text="Compare with original",variable=compare_flag, command=update_image)
+compare_checkbutton.grid(row=0, column=1)
 
+# Create texture drop down
 texture_options = [
     "Crumpled Paper",
     "News Print",
     "Pulp Print"
 ]
-
 #add and change filenames of textures here
 texture_filenames = [
     ".\sampleImages\pap.png",
     ".\sampleImages\pap.png",
     ".\sampleImages\papertexture.jpg"
 ]
-
 
 def change_texture(selected_texture):
     index = texture_options.index(selected_texture)
@@ -130,7 +156,10 @@ def change_texture(selected_texture):
 selected_texture = tk.StringVar()
 selected_texture.set( texture_options[0] ) 
 texture_dropdown = tk.OptionMenu(root, selected_texture, *texture_options, command=change_texture )
-texture_dropdown.grid(row=0, column=1)
+texture_dropdown.grid(row=1, column=1)
+
+
+
 
 # Make the window layout expandable
 root.grid_rowconfigure(0, weight=1)
