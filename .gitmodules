@@ -1,0 +1,3 @@
+[submodule "FSCS"]
+	path = FSCS
+	url = https://github.com/pfnet-research/FSCS.git

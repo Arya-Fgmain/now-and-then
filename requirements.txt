@@ -1,0 +1,13 @@
+numpy
+scipy
+opencv-python
+tqdm
+matplotlib
+ipython
+ipykernel
+torch
+torchvision
+opencv-python
+scikit-learn
+pandas
+guided_filter_pytorch
