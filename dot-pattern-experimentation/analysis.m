@@ -4,11 +4,37 @@ im = im2double(imread('drac_input/drac_old.png'));
 im_new = im2double(imread('drac_input/drac_new.png'));
 
 
+%testing area%%%%%%%%%%%%%%
+gray_im = rgb2gray(im_new);
+%filtered_im = imbilatfilt(gray_im, 0.2, 5);
+%figure;
+%imshow(imbilatfilt(gray_im,0.2, 5))
+% figure;
+% imshow(gray_im)
+% figure;
+
+% Find dark regions (text, shadows)
+threshold = 0.3; % Adjust based on your image
+dark_mask = gray_im < threshold;
+figure;
+imshow(dark_mask);
+
+%%%%%%%%%%%%%
+
+
+
+
+
+
+
 % alpha-add test
 num_layers = 5;
 
+
+
 layers = {};
 alphas = {};
+
 
 for i=1:num_layers
     [curr_im, ~, curr_alpha] = imread(sprintf('drac_old_layers/FinalLayers_%02d.png', i-1));
@@ -31,6 +57,8 @@ for i=1:num_layers_new
     layers_new{i} = curr_im;
     alphas_new{i} = curr_alpha;
 end
+
+new_alpha_black = alphas_new{1};
 
 
 %% find the strongest alpha layer (highest intensity)
@@ -155,4 +183,33 @@ end
 output_new = output_new + layers_new{6} .* alphas_new{6};
 output_new = output_new + layers_new{7} .* alphas_new{7};
 
-imshow(output_new)
+%test code
+new_alpha_black = new_alpha_black > 0.05;
+imshow(new_alpha_black)
+readded_darkness = output_new;
+for c = 1:3
+    channel = readded_darkness(:,:,c);
+    channel(new_alpha_black) = 0;
+    readded_darkness(:,:,c) = channel;
+end
+
+tobuscus = output_new;
+for c = 1:3
+    channel = readded_darkness(:,:,c);
+    channel(dark_mask) = 0;
+    readded_darkness(:,:,c) = channel;
+end
+
+subplot(1,3,1); imshow(output_new); title('normal processed Image');
+subplot(1,3,2); imshow(readded_darkness); title('filtered out with 1st layer alpha threshold');
+subplot(1,3,3); imshow(tobuscus); title('filtered out darkness based on raw image greyscale threshold');
+
+
+
+%new_alpha_black = new_alpha_black > 0.1;
+%imshow(new_alpha_black)
+
+%disp(new_alpha_black)
+
+% waitforbuttonpress
+% close all;
