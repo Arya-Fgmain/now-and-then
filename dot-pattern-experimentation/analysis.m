@@ -184,25 +184,25 @@ output_new = output_new + layers_new{6} .* alphas_new{6};
 output_new = output_new + layers_new{7} .* alphas_new{7};
 
 %test code
-new_alpha_black = new_alpha_black > 0.05;
+new_alpha_black = new_alpha_black > 0.3;
 imshow(new_alpha_black)
-readded_darkness = output_new;
+alpha_filtered = output_new;
 for c = 1:3
-    channel = readded_darkness(:,:,c);
+    channel = alpha_filtered(:,:,c);
     channel(new_alpha_black) = 0;
-    readded_darkness(:,:,c) = channel;
+    alpha_filtered(:,:,c) = channel;
 end
 
-tobuscus = output_new;
+raw_filtered = output_new;
 for c = 1:3
-    channel = readded_darkness(:,:,c);
+    channel = raw_filtered(:,:,c);
     channel(dark_mask) = 0;
-    readded_darkness(:,:,c) = channel;
+    raw_filtered(:,:,c) = channel;
 end
 
 subplot(1,3,1); imshow(output_new); title('normal processed Image');
-subplot(1,3,2); imshow(readded_darkness); title('filtered out with 1st layer alpha threshold');
-subplot(1,3,3); imshow(tobuscus); title('filtered out darkness based on raw image greyscale threshold');
+subplot(1,3,2); imshow(alpha_filtered); title('filtered out with 1st layer alpha threshold');
+subplot(1,3,3); imshow(raw_filtered); title('filtered out darkness based on raw image greyscale threshold');
 
 
 
