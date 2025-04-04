@@ -212,4 +212,4 @@ subplot(1,3,3); imshow(tobuscus); title('filtered out darkness based on raw imag
 %disp(new_alpha_black)
 
 % waitforbuttonpress
-% close all;
+%close all;
