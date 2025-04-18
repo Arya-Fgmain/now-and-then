@@ -33,22 +33,16 @@ function OpenCVView({ imagePaths }) {
     };
 
     const processImages = async () => {
-      const [img1, img2, img3, img4, img5, img6, img7, dots] = await Promise.all([
-        loadImageAsMat(imagePaths[0]),
-        loadImageAsMat(imagePaths[1]),
-        loadImageAsMat(imagePaths[2]),
-        loadImageAsMat(imagePaths[3]),
-        loadImageAsMat(imagePaths[4]),
-        loadImageAsMat(imagePaths[5]),
-        loadImageAsMat(imagePaths[6]),
-        loadImageAsMat(imagePaths[7]) // IMPORTANT this reads 4 channels whether or not the image actually is 4-channels or not
-      ]);
+
+      const loadedMats = await Promise.all(imagePaths.map(path => loadImageAsMat(path)));
+      const dots = loadedMats.pop(); // Last one is the dot pattern
+      const layers = loadedMats;
 
       // Match sizes if needed
-      canvas.width = img1.mat.cols;
-      canvas.height = img1.mat.rows;
+      canvas.width = layers[0].mat.cols;
+      canvas.height = layers[0].mat.rows;
 
-      cv.imshow(canvas, img1.mat);
+      cv.imshow(canvas, layers[0].mat);
 
       let result_initialized = false;
       let result = new cv.Mat();
@@ -76,10 +70,8 @@ function OpenCVView({ imagePaths }) {
 
       // scale the dot pattern to image size for easy merging
       let dotsF = new cv.Mat();
-      let dsize = new cv.Size(img1.mat.cols, img1.mat.rows);
+      let dsize = new cv.Size(layers[0].mat.cols, layers[0].mat.rows);
       cv.resize(dots_norm, dotsF, dsize, 0, 0, cv.INTER_CUBIC);
-
-      let layers = [img1, img2, img3, img4, img5, img6, img7];
 
       for (let i = 0; i < layers.length; i++) {
         const curr_layer = layers[i].mat;
@@ -187,13 +179,7 @@ function OpenCVView({ imagePaths }) {
       cv.imshow(canvas, finalDisplay);
 
       // Cleanup
-      img1.mat.delete();
-      img2.mat.delete();
-      img3.mat.delete();
-      img4.mat.delete();
-      img5.mat.delete();
-      img6.mat.delete();
-      img7.mat.delete();
+      layers.forEach(layer => layer.mat.delete());
       dots.mat.delete();
       dots_float.delete();
       dots_norm.delete();
