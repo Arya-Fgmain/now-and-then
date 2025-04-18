@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 
-function OpenCVView({ imagePaths}) {
+function OpenCVView({ imagePaths }) {
   const canvasRef = useRef();
 
   useEffect(() => {
@@ -26,7 +26,7 @@ function OpenCVView({ imagePaths}) {
           tempCtx.drawImage(img, 0, 0, width, height);
 
           const mat = cv.matFromImageData(tempCtx.getImageData(0, 0, width, height));
-            // IMPORTANT this always reads 4 channels. Even if it's a single-channel grayscale, it just duplicates the channels :)
+          // IMPORTANT this always reads 4 channels. Even if it's a single-channel grayscale, it just duplicates the channels :)
           resolve({ mat, width, height });
         };
       });
@@ -76,13 +76,12 @@ function OpenCVView({ imagePaths}) {
 
       // scale the dot pattern to image size for easy merging
       let dotsF = new cv.Mat();
-      let dsize = new cv.Size(img1.mat.cols,img1.mat.rows);
+      let dsize = new cv.Size(img1.mat.cols, img1.mat.rows);
       cv.resize(dots_norm, dotsF, dsize, 0, 0, cv.INTER_CUBIC);
 
       let layers = [img1, img2, img3, img4, img5, img6, img7];
 
-      for (let i = 0; i < layers.length; i++)
-      {
+      for (let i = 0; i < layers.length; i++) {
         const curr_layer = layers[i].mat;
 
         // convert to float first
@@ -110,7 +109,7 @@ function OpenCVView({ imagePaths}) {
         cv.merge(alpha_vec, alpha_mult);
 
         /* create gamma 1 */
-        
+
         // must modulate hf by alpha_mult
         const gamma_2 = new cv.Mat();
         cv.multiply(dotsF, alpha_mult, gamma_2);
@@ -122,7 +121,7 @@ function OpenCVView({ imagePaths}) {
         cv.subtract(alpha_mult, gamma_2, gamma_1);
 
         /* mult & add */
-        
+
         // foreground color (dots)
         const dots_color = new cv.Mat(curr_layer_F.rows, curr_layer_F.cols, cv.CV_32FC4, new cv.Scalar(0.5, 0.5, 0.5, 1.0));
         const colors_fg = new cv.Mat();
@@ -141,15 +140,14 @@ function OpenCVView({ imagePaths}) {
         cv.add(colors_bg, colors_fg, sum);
 
         // if this is the first iteration, need to initialize the 'result' output
-        if (!result_initialized)
-        {
+        if (!result_initialized) {
           result = sum.clone();
           result_initialized = true;
         }
         else {
-           cv.add(result, sum, result);
+          cv.add(result, sum, result);
         }
-        
+
         // free memory (good ol' C++ <3)
         curr_layer_float.delete();
         curr_layer_F.delete();
@@ -165,7 +163,7 @@ function OpenCVView({ imagePaths}) {
         colors_bg.delete();
         sum.delete();
       }
-      
+
       // Remove alpha (keep only RGB)
       const allChannels = new cv.MatVector();
       cv.split(result, allChannels);
@@ -213,7 +211,7 @@ function OpenCVView({ imagePaths}) {
   return (
     <div>
       <h3>OpenCV Image Mixer</h3>
-      <canvas ref={canvasRef}></canvas>
+      <canvas id="canvas" ref={canvasRef}></canvas>
     </div>
   );
 }

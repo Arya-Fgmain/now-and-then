@@ -4,7 +4,7 @@ import convert from "color-convert";
 import Sliders from "./components/Sliders";
 import ColorPicker from "./components/colorPicker";
 import ImageUploader from "./components/simpleMultifile";
-import TextureSelector, {imageOptions} from "./components/textureSelector";
+import TextureSelector, { imageOptions } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
 import {
   defaultFilter,
@@ -289,7 +289,7 @@ const App = () => {
       const additionalIntensity = additionalData.map((data) => {
         return data.data[i];
       });
-      
+
       // alpha to full value
       resultData.data[i + 3] = 255;
     }
@@ -690,19 +690,19 @@ const App = () => {
       type === "linearCombination"
         ? sliderValuesLAB
         : type === "Filtering"
-        ? filterSettings
-        : type === "XYZColoring"
-        ? XYZSliders
-        : "";
+          ? filterSettings
+          : type === "XYZColoring"
+            ? XYZSliders
+            : "";
 
     const setSliderValues =
       type === "linearCombination"
         ? setSliderValuesLAB
         : type === "Filtering"
-        ? setFilterSettings
-        : type === "XYZColoring"
-        ? setXYZSliders
-        : "";
+          ? setFilterSettings
+          : type === "XYZColoring"
+            ? setXYZSliders
+            : "";
 
     // Reset it to default
     setSliderValues(defaultSliders[type]);
@@ -883,6 +883,93 @@ const App = () => {
     copyCanvasData(resultCanvasRef, previewChangeRef);
   };
 
+  let isActiveSelectLayer = false;
+  let hasInitialized = false;
+  const selectLayer = async () => {
+    const canvas = document.getElementById('canvas');
+    const coordx = document.getElementById('coordx');
+    const coordy = document.getElementById('coordy');
+    const btn_selectLayer = document.getElementById('btn-select-layer');
+    const scale = 0.6
+
+    const loadImageAsMat = (path) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = path;
+        img.onload = () => {
+          const mat = cv.imread(img);
+          mat.data
+          resolve(mat);
+        };
+        img.onerror = (err) => {
+          reject(err);
+        };
+      });
+    };
+
+    if (!canvas) return;
+
+    isActiveSelectLayer = !isActiveSelectLayer;
+    if (!isActiveSelectLayer) {
+      btn_selectLayer.innerText = 'Select';
+
+      if (hasInitialized) {
+        const layers = await Promise.all([
+          loadImageAsMat('/layer_0.png'),
+          loadImageAsMat('/layer_1.png'),
+          loadImageAsMat('/layer_2.png'),
+          loadImageAsMat('/layer_3.png'),
+          loadImageAsMat('/layer_4.png'),
+          loadImageAsMat('/layer_5.png'),
+          loadImageAsMat('/layer_6.png'),
+        ]);
+        const _x = +coordx.value;
+        const _y = +coordy.value;
+        console.log(layers[2].ucharPtr(_y, _x));
+
+        let max_alpha = 0;
+        let max_index = 0;
+        for (let i = 0; i < layers.length; ++i) {
+          const alpha = layers[i].ucharPtr(_y, _x)[3];
+          if (alpha > max_alpha) {
+            max_alpha = alpha;
+            max_index = i;
+          }
+        }
+        console.log(`idx=${max_index}, alpha=${max_alpha}`)
+
+        for (let i = 0; i < layers.length; ++i) {
+          layers[i].delete();
+        }
+      }
+      return;
+    } else {
+      btn_selectLayer.innerText = 'Decide';
+    }
+
+    if (!hasInitialized) {
+      hasInitialized = true;
+      canvas.addEventListener('click', function (e) {
+        if (!isActiveSelectLayer) return;
+
+        // Get the mouse position
+        const rect = canvas.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+
+        if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+          x = Math.floor(x / scale);
+          y = Math.floor(y / scale);
+
+          console.log(`Mouse position: (y=${y}, x=${x})`);
+
+          if (coordx) { coordx.value = `${x}`; }
+          if (coordy) { coordy.value = `${y}`; }
+        };
+      });
+    }
+  };
+
   // setup function to resize result and preview canvas when window is resized
   useEffect(() => {
     const handleResizeCanvas = () => {
@@ -942,12 +1029,12 @@ const App = () => {
     <div className="container">
       <div className="main-content">
         <div className="container">
-            {/* <OpenCVView imagePaths={["/layer_0.png", "/layer_1.png", "/layer_2.png", "/layer_3.png", "/layer_4.png", "/layer_5.png", "/layer_6.png", "/sample_texture_norm_chan.png"]} />
-             */}<OpenCVView
-            imagePaths={[...imagePaths, texture]}/>
-            
+          {/* <OpenCVView imagePaths={["/layer_0.png", "/layer_1.png", "/layer_2.png", "/layer_3.png", "/layer_4.png", "/layer_5.png", "/layer_6.png", "/sample_texture_norm_chan.png"]} />
+             */}
+          <OpenCVView
+            imagePaths={[...imagePaths, texture]} />
         </div>
-        { <div className="canvas-container">
+        {<div className="canvas-container">
           <canvas
             id="preview-canvas"
             ref={previewChangeRef}
@@ -961,30 +1048,30 @@ const App = () => {
             className="result-canvas"
             style={{ transform: `scale(${zoomScale})` }}
           ></canvas>
-        </div> }
+        </div>}
         <div className="control-panel">
           <Collapsible
-          title="Upload Files"
-          openTool={openTool}
-          setOpenTool={setOpenTool}>
+            title="Upload Files"
+            openTool={openTool}
+            setOpenTool={setOpenTool}>
             <b>Select your layers</b>
             <ImageUploader
-            imagePaths={imagePaths}
-            setImagePaths={setImagePaths}/>
+              imagePaths={imagePaths}
+              setImagePaths={setImagePaths} />
 
           </Collapsible>
-          
-          { <Collapsible
+
+          {<Collapsible
             title="Texture Options"
             openTool={openTool}
             setOpenTool={setOpenTool}
           >
             {<TextureSelector
-            texture={texture}
-            setTexture={setTexture}
+              texture={texture}
+              setTexture={setTexture}
             />}
           </Collapsible>}
-          { <Collapsible
+          {<Collapsible
             title="Background Color"
             openTool={openTool}
             setOpenTool={setOpenTool}
@@ -992,7 +1079,7 @@ const App = () => {
             type="XYZColoring"
             resetCanvas={resetCanvas}
             resetAdditionalSliders={resetAdditionalSliders}
-          >  
+          >
             {/* <Sliders
               type="XYZColoring"
               sliderValues={XYZSliders}
@@ -1005,29 +1092,29 @@ const App = () => {
               resetCanvas={resetCanvas}
               resetAdditionalSliders={resetAdditionalSliders}
             /> */}
-            
+
             <ColorPicker
-            color={backgroundColor}
-            setColor={setBackgroundColor}
-              />
+              color={backgroundColor}
+              setColor={setBackgroundColor}
+            />
             {/* <p>Color: {backgroundColor}</p> */}
 
-            
-            
+
+
           </Collapsible>}
-          { <Collapsible
-              title = "Dot Color"
-              openTool={openTool}
-              setOpenTool={setOpenTool}
-              >
-              <ColorPicker
+          {<Collapsible
+            title="Dot Color"
+            openTool={openTool}
+            setOpenTool={setOpenTool}
+          >
+            <ColorPicker
               color={dotsColor}
               setColor={setDotsColor}
-              />
-            
+            />
+
           </Collapsible>}
 
-          
+
           <Collapsible
             title="Strength"
             openTool={openTool}
@@ -1058,9 +1145,25 @@ const App = () => {
           >
             Download Result Image
           </button>
+
+          <button
+            onClick={selectLayer}
+            className="default-button" id="btn-select-layer"
+            style={{ padding: "10px 20px", marginTop: "20px", width: "30%" }}
+          >
+            Select
+          </button>
+          <span class="coord-text"
+            style={{ padding: "10px", width: "5%" }}>x:</span>
+          <input type="number" id="coordx" placeholder="X" min="0"
+            style={{ width: "20%" }} />
+          <span class="coord-text"
+            style={{ padding: "10px", width: "5%" }}>y:</span>
+          <input type="number" id="coordy" placeholder="Y" min="0"
+            style={{ width: "20%" }} />
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 export default App;
