@@ -7,6 +7,7 @@ import ImageUploader from "./components/simpleMultifile";
 import TextureSelector, { imageOptions } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
 import {
+  defaultDotStength,
   defaultFilter,
   defaultLABColoring,
   defaultSliders,
@@ -39,6 +40,8 @@ const App = () => {
 
   // Initial values for sliders(traditional xyz transform matrix)
   const [XYZSliders, setXYZSliders] = useState(defaultXYZColoring);
+  
+  const [DotStength, setDotStength] = useState(defaultDotStength)
 
   //Initial value for background
   //const [backgroundColor, setBackgroundColor] = useState(defualtBackgroundColor)
@@ -1076,22 +1079,10 @@ const App = () => {
             openTool={openTool}
             setOpenTool={setOpenTool}
             setSliderValues={setXYZSliders}
-            type="XYZColoring"
+            type="DotsStrength"
             resetCanvas={resetCanvas}
             resetAdditionalSliders={resetAdditionalSliders}
           >
-            {/* <Sliders
-              type="XYZColoring"
-              sliderValues={XYZSliders}
-              setSliderValues={setXYZSliders}
-              applyEdit={() => previewEdit("XYZColoring")}
-              finalizeEdit={(type) => finalizeEdit(type)}
-              additionalFiles={additionalFiles}
-              additionalFilesSliders={additionalFilesSliders}
-              setAdditionalFilesSliders={setAdditionalFilesSliders}
-              resetCanvas={resetCanvas}
-              resetAdditionalSliders={resetAdditionalSliders}
-            /> */}
 
             <ColorPicker
               color={backgroundColor}
@@ -1119,15 +1110,15 @@ const App = () => {
             title="Strength"
             openTool={openTool}
             setOpenTool={setOpenTool}
-            setSliderValues={setFilterSettings}
-            type="Filtering"
+            setSliderValues={setDotStength}
+            type="DotStrength"
             resetCanvas={resetCanvas}
             resetAdditionalSliders={resetAdditionalSliders}
           >
             <Sliders
-              type="Filtering"
-              sliderValues={filterSettings}
-              setSliderValues={setFilterSettings}
+              type="DotStrength"
+              sliderValues={DotStength}
+              setSliderValues={setDotStength}
               applyEdit={() => previewEdit("Filtering")}
               finalizeEdit={(type) => finalizeEdit(type)}
               additionalFiles={additionalFiles}

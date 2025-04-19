@@ -44,4 +44,6 @@ export const defaultSliders = {
   Filtering: defaultFilter,
 
   XYZColoring: defaultXYZColoring,
+  
+  DotStrength: defaultDotStength,
 };
