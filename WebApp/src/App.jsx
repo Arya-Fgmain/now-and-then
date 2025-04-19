@@ -962,6 +962,8 @@ const App = () => {
             className="result-canvas"
             style={{ transform: `scale(${zoomScale})` }}
           ></canvas>
+
+          <canvas id="dot-layer-canvas" style={{ width: "100%" }} ></canvas>
         </div>}
         <div className="control-panel">
           <Collapsible
