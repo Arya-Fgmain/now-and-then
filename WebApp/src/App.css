@@ -21,34 +21,14 @@
   position: relative;
 }
 
-.preview-canvas,
-.result-canvas {
-  position: absolute;
-  transform-origin: center center;
-  display: none;
-}
-
-.preview-canvas {
-  z-index: 10;
-  display: block;
-}
 
 .control-panel {
   width: 300px;
   background-color: #868686;
   padding: 20px;
   z-index: 20;
-}
-
-.history-buttons {
-  left: 10px;
-  top: 10px;
-  display: flex;
-  flex-direction: row;
-}
-
-.history-button {
-  width: 50%;
+  margin-left: auto;
+  align-items: flex-start;
 }
 
 .default-button {

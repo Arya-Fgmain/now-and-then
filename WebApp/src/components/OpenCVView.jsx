@@ -179,7 +179,13 @@ function OpenCVView({ imagePaths }) {
       cv.imshow(canvas, finalDisplay);
 
       // Cleanup
-      layers.forEach(layer => layer.mat.delete());
+      img1.mat.delete();
+      img2.mat.delete();
+      img3.mat.delete();
+      img4.mat.delete();
+      img5.mat.delete();
+      img6.mat.delete();
+      img7.mat.delete();
       dots.mat.delete();
       dots_float.delete();
       dots_norm.delete();
@@ -196,7 +202,6 @@ function OpenCVView({ imagePaths }) {
 
   return (
     <div>
-      <h3>OpenCV Image Mixer</h3>
       <canvas id="canvas" ref={canvasRef}></canvas>
     </div>
   );
