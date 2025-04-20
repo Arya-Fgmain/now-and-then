@@ -64,15 +64,29 @@ function OpenCVView({ imagePaths, dotStrength }) {
       /* dilation & erosion <=> modifying dot intensity*/
 
       //important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
-      const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(dotStrength.Settings["Dot Size"], dotStrength.Settings["Dot Size"]));
+
+      const dot_strength = dotStrength.Settings["Dot Size"];
+
+      const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(dot_strength, dot_strength));
       let erd = new cv.Mat();
       cv.erode(dotsF, erd, kern);
       let dil = new cv.Mat();
       cv.dilate(dotsF, dil, kern);
-      cv.imshow(canvas, dil);
       kern.delete();
-      erd.delete();
-      dil.delete();
+
+      dotsF = dil;
+
+      // check for dot size modification from the user
+      if (dot_strength > 5)
+      {
+        dotsF = dil;
+        erd.delete();
+      }
+      else if (dot_strength < 5)
+      {
+        dotsF = erd;
+        dil.delete();
+      }
 
 
       for (let i = 0; i < layers.length; i++) {
