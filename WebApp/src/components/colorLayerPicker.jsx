@@ -7,231 +7,301 @@
  * @date 2025-04-17
  */
 
-function GetLayer({ paths }) {
-    // same as OpenCVView.loadImageAsMat
+function get_alpha_channel(img) {
+    const img_vec = new cv.MatVector();
+    cv.split(img, img_vec)
 
-    const loadImageAsMat = (path) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = path;
-            img.onload = () => {
-                const mat = cv.imread(img);
-                mat.data
-                resolve(mat);
-            };
-            img.onerror = (err) => {
-                reject(err);
-            };
-        });
-    };
+    // we just need the alpha channel
+    return img_vec.get(3);
+}
 
-    const im2norm = (img) => {
-        const f_mat = new cv.Mat();
-        img.convertTo(f_mat, cv.CV_32FC4);
+function get_alpha_mat(img) {
+    const alpha_channel = get_alpha_channel(img);
 
-        const norm_mat = new cv.Mat();
-        cv.normalize(f_mat, norm_mat, 0.0, 1.0, cv.NORM_MINMAX);
+    // construct the 4-channel alpha image
+    const vec = new cv.MatVector();
+    for (let i = 0; i < 4; ++i) vec.push_back(alpha_channel);
 
-        f_mat.delete();
+    // merge the 4 together
+    const rst = new cv.Mat();
+    cv.merge(vec, rst);
 
-        return norm_mat;
-    };
+    alpha_channel.delete();
+    vec.delete();
 
-    const initialize = async (layer) => {
-        // example target layer; realistically, this'd be picked by the user
-        // const target_layer = new cv.Mat();
-        // layer.convertTo(target_layer, cv.CV_32FC4);
+    return rst;
+}
 
-        // const target_layer_norm = new cv.Mat();
-        // cv.normalize(target_layer, target_layer_norm, 0.0, 1.0, cv.NORM_MINMAX);
-        const norm_layer = im2norm(layer);
+function get_rgb_mat(img) {
+    // Remove alpha (keep only RGB)
+    const channels = new cv.MatVector();
+    cv.split(img, channels);
 
-        const target_chans = new cv.MatVector();
-        cv.split(norm_layer, target_chans)
+    // // manually keep only first 3
+    const vec = new cv.MatVector();
+    vec.push_back(channels.get(0));
+    vec.push_back(channels.get(1));
+    vec.push_back(channels.get(2));
 
-        // we just need the alpha channel
-        const target_alpha = target_chans.get(3);
+    // merge into final RGB result
+    const rst = new cv.Mat();
+    cv.merge(vec, rst);
 
-        // now quantize (based on Yagiz's method in 361, the first MATLAB lecture; ask Arya if you wanna see it)
-        let temp = new cv.Mat();
-        cv.multiply(
-            target_alpha,
-            new cv.Mat(target_alpha.rows,
-                target_alpha.cols,
-                target_alpha.type(),
-                [5, 5, 5, 0]),
-            temp);
-        temp.convertTo(temp, cv.CV_8U);
+    channels.delete();
+    vec.delete();
 
-        // contains quantized alpha map, which we will turn into masks for different dot sizes
-        let quantized = new cv.Mat();
-        temp.convertTo(quantized, cv.CV_32F, 1 / 5.0);
+    return rst;
+}
 
-        norm_layer.delete();
-        temp.delete();
-        target_chans.delete();
-        target_alpha.delete();
+function loadImageAsMat(path) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = path;
+        img.onload = () => {
+            const mat = cv.imread(img);
+            resolve(mat);
+        };
+        img.onerror = (err) => {
+            reject(err);
+        };
+    });
+}
 
-        return quantized;
-    };
+function im2norm(img) {
+    const f_mat = new cv.Mat();
+    img.convertTo(f_mat, cv.CV_32FC4);
 
-    const buildMask = async (src, levels) => {
-        return levels.map(level => {
-            let scale_level = new cv.Mat(
-                src.rows,
-                src.cols,
-                src.type(),
-                [level, level, level, 0]
-            );
-            let mask = new cv.Mat();
-            cv.inRange(src, scale_level, scale_level, mask);
+    const norm_mat = new cv.Mat();
+    cv.normalize(f_mat, norm_mat, 0.0, 1.0, cv.NORM_MINMAX);
 
-            let channels = new cv.MatVector();
-            for (let i = 0; i < 4; ++i) channels.push_back(mask);
+    f_mat.delete();
 
-            let merged = new cv.Mat();
-            cv.merge(channels, merged);
+    return norm_mat;
+}
 
-            let rst = new cv.Mat();
-            merged.convertTo(rst, cv.CV_32FC4);
+function initialize(layer) {
+    const norm_layer = im2norm(layer);
+    const target_alpha = get_alpha_channel(norm_layer);
 
-            scale_level.delete();
-            mask.delete();
-            channels.delete();
-            merged.delete();
+    // now quantize (based on Yagiz's method in 361, the first MATLAB lecture; ask Arya if you wanna see it)
+    let temp = new cv.Mat();
+    cv.multiply(
+        target_alpha,
+        new cv.Mat(target_alpha.rows,
+            target_alpha.cols,
+            target_alpha.type(),
+            [5, 5, 5, 0]),
+        temp);
+    temp.convertTo(temp, cv.CV_8U);
 
-            return rst;
-        });
-    };
+    // contains quantized alpha map, which we will turn into masks for different dot sizes
+    let quantized = new cv.Mat();
+    temp.convertTo(quantized, cv.CV_32F, 1 / 5.0);
 
-    const dots_init = async (layer, dots) => {
-        const norm_dots = im2norm(dots);
-        const pruned_dots = new cv.Mat();
-        const layer_size = new cv.Size(layer.cols, layer.rows);
+    norm_layer.delete();
+    temp.delete();
+    // target_chans.delete();
+    target_alpha.delete();
 
-        cv.resize(norm_dots, pruned_dots, layer_size, 0, 0, cv.INTER_CUBIC);
+    return quantized;
+}
 
-        const y_max = norm_dots.cols - layer.cols;
-        const x_max = norm_dots.rows - layer.rows;
-        const crop_area = new cv.Rect(
-            Math.floor(Math.random() * y_max),
-            Math.floor(Math.random() * x_max),
-            layer.cols,
-            layer.rows
+function buildMask(src, levels) {
+    return levels.map(level => {
+        let scale_level = new cv.Mat(
+            src.rows,
+            src.cols,
+            src.type(),
+            [level, level, level, 0]
         );
+        let mask = new cv.Mat();
+        cv.inRange(src, scale_level, scale_level, mask);
 
-        console.log(crop_area);
+        let channels = new cv.MatVector();
+        for (let i = 0; i < 4; ++i) channels.push_back(mask);
+
+        let merged = new cv.Mat();
+        cv.merge(channels, merged);
 
         let rst = new cv.Mat();
-        rst = norm_dots.roi(crop_area);
+        merged.convertTo(rst, cv.CV_32FC4);
 
-        pruned_dots.delete();
-        norm_dots.delete();
-
-        return rst;
-    };
-
-    const dots_for_quantized_levels = async (dots, num_levels) => {
-        let rst = [];
-
-        // essentially, dilate the dot map more and more, and save the different dilation levels
-        for (let i = 0; i < num_levels; i++) {
-            const kernel = cv.getStructuringElement(
-                cv.MORPH_ELLIPSE,
-                new cv.Size(i + 1, i + 1));
-            let dil = new cv.Mat();
-
-            cv.dilate(dots, dil, kernel);
-            rst.push(dil);
-
-            kernel.delete();
-        }
+        scale_level.delete();
+        mask.delete();
+        channels.delete();
+        merged.delete();
 
         return rst;
-    };
+    });
+}
 
-    const merge = async (dots, layers) => {
-        let result_initialized = false;
-        let result = new cv.Mat();
+function dots_init(layer, dots) {
+    const norm_dots = im2norm(dots);
+    const pruned_dots = new cv.Mat();
+    const layer_size = new cv.Size(layer.cols, layer.rows);
 
-        for (let i = 0; i < layers.length; i++) {
-            const layer = layers[i];
-            const norm_layer = im2norm(layer)
+    cv.resize(norm_dots, pruned_dots, layer_size, 0, 0, cv.INTER_CUBIC);
 
-            // now separate the channels so that we can single-out the alpha
-            const layer_split = new cv.MatVector();
-            cv.split(norm_layer, layer_split);
+    const y_max = norm_dots.cols - layer.cols;
+    const x_max = norm_dots.rows - layer.rows;
+    const crop_area = new cv.Rect(
+        Math.floor(Math.random() * y_max),
+        Math.floor(Math.random() * x_max),
+        layer.cols,
+        layer.rows
+    );
 
-            // get the alpha
-            const alpha = layer_split.get(3);
-            // curr_alpha.convertTo(curr_alpha, cv.CV_32F, 1.0/255.0);
+    console.log(crop_area);
 
-            // construct the 4-channel alpha image
-            const alpha_vec = new cv.MatVector();
-            alpha_vec.push_back(alpha); alpha_vec.push_back(alpha); alpha_vec.push_back(alpha); alpha_vec.push_back(alpha);
+    let rst = new cv.Mat();
+    rst = norm_dots.roi(crop_area);
 
-            // merge the 4 together
-            const alpha_mult = new cv.Mat();
-            cv.merge(alpha_vec, alpha_mult);
+    pruned_dots.delete();
+    norm_dots.delete();
 
-            /* create gamma 1 */
+    return rst;
+}
 
-            // must modulate hf by alpha_mult
-            const gamma_2 = new cv.Mat();
-            cv.multiply(dots, alpha_mult, gamma_2);
+function dots_for_quantized_levels(dots, num_levels) {
+    let rst = [];
 
-            // cv.imshow(canvas, gamma_1)
+    // essentially, dilate the dot map more and more, and save the different dilation levels
+    for (let i = 0; i < num_levels; i++) {
+        const kernel = cv.getStructuringElement(
+            cv.MORPH_ELLIPSE,
+            new cv.Size(i + 1, i + 1));
+        let dil = new cv.Mat();
 
-            /* create gamma 2 */
-            const gamma_1 = new cv.Mat();
-            cv.subtract(alpha_mult, gamma_2, gamma_1);
+        cv.dilate(dots, dil, kernel);
+        rst.push(dil);
 
-            /* mult & add */
+        kernel.delete();
+    }
 
-            // foreground color (dots)
-            const dots_color = new cv.Mat(norm_layer.rows, norm_layer.cols, cv.CV_32FC4, new cv.Scalar(0.5, 0.5, 0.5, 1.0));
-            const colors_fg = new cv.Mat();
-            cv.multiply(dots_color, gamma_2, colors_fg);
+    return rst;
+}
 
-            // background color
-            const colors_bg = new cv.Mat();
-            cv.multiply(norm_layer, gamma_1, colors_bg);
+function apply_dots_on_mask(dot_strength, masks) {
+    // initialize this with zeros, otherwise the results will be all over the place (seriously)
+    let rst = new cv.Mat.zeros(
+        masks[0].rows,
+        masks[0].cols,
+        masks[0].type()
+    );
 
-            // multiply the channel by the alphas
-            // const layer_weighted = new cv.Mat();
-            // cv.multiply(curr_layer_F, alpha_mult, layer_weighted);
+    /*
+        MATLAB-equivalent, which this whole thing is based on:
+        dots_combined = mask2 .* hf2 + mask3 .* hf3 + ... + maskn .* hfn;
+    */
+    for (let i = 0; i < dot_strength.length; i++) {
+        const mask = masks[i];
+        const dots = dot_strength[i];
+        const temp = new cv.Mat();
 
-            // put foreground & background together
-            const sum = new cv.Mat();
-            cv.add(colors_bg, colors_fg, sum);
+        cv.multiply(dots, mask, temp);
+        cv.add(temp, rst, rst);
 
-            // if this is the first iteration, need to initialize the 'result' output
-            if (!result_initialized) {
-                result = sum.clone();
-                result_initialized = true;
-            }
-            else {
-                cv.add(result, sum, result);
-            }
+        temp.delete();
+    }
 
-            // free memory (good ol' C++ <3)
-            norm_layer.delete();
-            layer_split.delete();
-            // layer_weighted.delete();
-            alpha.delete();
-            alpha_vec.delete();
-            alpha_mult.delete();
-            gamma_1.delete();
-            gamma_2.delete();
-            dots_color.delete();
-            colors_fg.delete();
-            colors_bg.delete();
-            sum.delete();
+    // remember to normalize to the [0,1] range to prevent color distortions in the final result
+    cv.normalize(rst, rst, 0.0, 1.0, cv.NORM_MINMAX);
+
+    return rst;
+}
+
+function merge(dots, layers) {
+    let is_first = false;
+    let result = new cv.Mat();
+
+    layers.forEach(layer => {
+        const norm_layer = im2norm(layer)
+        const alpha_mult = get_alpha_mat(norm_layer);
+
+        /* create gamma 1 */
+        // must modulate hf by alpha_mult
+        const gamma_2 = new cv.Mat();
+        cv.multiply(dots, alpha_mult, gamma_2);
+
+        /* create gamma 2 */
+        const gamma_1 = new cv.Mat();
+        cv.subtract(alpha_mult, gamma_2, gamma_1);
+
+        /* mult & add */
+        // foreground color (dots)
+        const dots_color = new cv.Mat(
+            norm_layer.rows,
+            norm_layer.cols,
+            cv.CV_32FC4,
+            new cv.Scalar(0.5, 0.5, 0.5, 1.0)
+        );
+        const colors_fg = new cv.Mat();
+        cv.multiply(dots_color, gamma_2, colors_fg);
+
+        // background color
+        const colors_bg = new cv.Mat();
+        cv.multiply(norm_layer, gamma_1, colors_bg);
+
+        // put foreground & background together
+        const temp = new cv.Mat();
+        cv.add(colors_bg, colors_fg, temp);
+
+        // if this is the first iteration, need to initialize the 'result' output
+        if (!is_first) {
+            result = temp.clone();
+            is_first = true;
+        }
+        else {
+            cv.add(result, temp, result);
         }
 
-        return result;
-    };
+        // free memory (good ol' C++ <3)
+        norm_layer.delete();
+        alpha_mult.delete();
+        gamma_1.delete();
+        gamma_2.delete();
+        dots_color.delete();
+        colors_fg.delete();
+        colors_bg.delete();
+        temp.delete();
+    });
 
+    return result;
+}
+
+async function apply_dots_on_layer(layers, index) {
+    const layer = layers[index];
+    const quantized = initialize(layer);
+    const masks = buildMask(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
+    const dots = await loadImageAsMat("/tex-4000.png");
+    const crop_dots = dots_init(layer, dots);
+    const dot_strength = dots_for_quantized_levels(crop_dots, 5);
+    const norm_dots = apply_dots_on_mask(dot_strength, masks);
+    const rgba_img = merge(norm_dots, layers);
+
+    /* important: one final OpenCV dance before we can display everything
+     * right now the alpha layer has all sorts of garbage data, which, 
+     * if not removed, will make the image look very weird
+     */
+
+    const rgb_img = get_rgb_mat(rgba_img);
+
+    // Normalize once at the end
+    cv.normalize(rgb_img, rgb_img, 0, 255, cv.NORM_MINMAX);
+    rgb_img.convertTo(rgb_img, cv.CV_8UC3);
+
+    cv.imshow("dot-layer-canvas", rgb_img);
+
+    quantized.delete();
+    masks.forEach(mask => mask.delete());
+    dots.delete();
+    crop_dots.delete();
+    dot_strength.forEach(dot => dot.delete());
+    norm_dots.delete();
+    rgb_img.delete();
+}
+
+function GetLayer({ paths }) {
     let isActiveSelectLayer = false;
     let hasInitialized = false;
     const selectLayer = async () => {
@@ -274,78 +344,7 @@ function GetLayer({ paths }) {
                 console.log(`idx=${max_index}, alpha=${max_alpha}`)
 
                 try {
-                    const layer = layers[max_index];
-                    const quantized = await initialize(layer);
-                    const masks = await buildMask(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
-                    const dots = await loadImageAsMat("/sample_fixpat2.png");
-                    const crop_dots = await dots_init(layer, dots);
-                    const dot_strength = await dots_for_quantized_levels(crop_dots, 5);
-
-                    // initialize this with zeros, otherwise the results will be all over the place (seriously)
-                    let dots_combined = new cv.Mat.zeros(
-                        masks[0].rows,
-                        masks[0].cols,
-                        masks[0].type()
-                    );
-
-                    /*
-                        MATLAB-equivalent, which this whole thing is based on:
-                        dots_combined = mask2 .* hf2 + mask3 .* hf3 + ... + maskn .* hfn;
-                    */
-                    for (let i = 0; i < dot_strength.length; i++) {
-                        const mask = masks[i];
-                        const tmp_dots = dot_strength[i];
-                        const curr_dot_map = new cv.Mat();
-
-                        cv.multiply(tmp_dots, mask, curr_dot_map);
-                        cv.add(curr_dot_map, dots_combined, dots_combined);
-
-                        curr_dot_map.delete();
-                    }
-
-                    // remember to normalize to the [0,1] range to prevent color distortions in the final result
-                    let dots_c_norm = new cv.Mat();
-                    cv.normalize(dots_combined, dots_c_norm, 0.0, 1.0, cv.NORM_MINMAX);
-
-                    const result = await merge(dots_c_norm, layers);
-                    
-                                        /*  important: one final OpenCV dance before we can display everything
-                        right now the alpha layer has all sorts of garbage data, which, if not removed, will make the image look very weird
-                    */
-
-                    // Remove alpha (keep only RGB)
-                    const allChannels = new cv.MatVector();
-                    cv.split(result, allChannels);
-
-                    // manually keep only first 3
-                    const rgbVec = new cv.MatVector();
-                    rgbVec.push_back(allChannels.get(0));
-                    rgbVec.push_back(allChannels.get(1));
-                    rgbVec.push_back(allChannels.get(2));
-
-                    // merge into final RGB result
-                    const rgbOnly = new cv.Mat();
-                    cv.merge(rgbVec, rgbOnly);
-
-                    // Normalize once at the end
-                    const finalDisplay = new cv.Mat();
-                    cv.normalize(rgbOnly, finalDisplay, 0, 255, cv.NORM_MINMAX);
-                    finalDisplay.convertTo(finalDisplay, cv.CV_8UC3);
-
-                    cv.imshow(dot_layer_canvas, finalDisplay);
-
-                    quantized.delete();
-                    masks.forEach(mask => mask.delete());
-                    dots.delete();
-                    crop_dots.delete();
-                    dot_strength.forEach(dot => dot.delete());
-                    dots_combined.delete();
-                    dots_c_norm.delete();
-                    allChannels.delete();
-                    rgbVec.delete();
-                    rgbOnly.delete();
-                    finalDisplay.delete();
-
+                    await apply_dots_on_layer(layers, max_index);
                 } catch (e) {
                     console.error(e);
                 }

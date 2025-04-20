@@ -30,7 +30,7 @@ const App = () => {
 
   // Initial values for sliders(traditional xyz transform matrix)
   const [XYZSliders, setXYZSliders] = useState(defaultXYZColoring);
-  
+
   const [DotStength, setDotStength] = useState(defaultDotStength)
 
   //Initial value for background
@@ -87,60 +87,60 @@ const App = () => {
     });
   };
 
- /*  const downloadImage = async () => {
-    // Redraw rgbCanvas to hi-res version
-    await drawImageOnCanvas(URL.createObjectURL(rgbFile), rgbCanvasRef, false);
-    // Display loading
-    setDisplayLoading(true);
-    // Redraw nirCanvas to hi-res version
-    await drawImageOnCanvas(URL.createObjectURL(nirFile), nirCanvasRef, false);
-    // reference: https://stackoverflow.com/questions/10179815/get-loop-counter-index-using-for-of-syntax-in-javascript
-    for (const [index, file] of additionalFiles.entries()) {
-      await drawImageOnCanvas(
-        URL.createObjectURL(file.file),
-        additionalCanvasRefs[index],
-        false
-      );
-    }
-    copyCanvasData(rgbCanvasRef, resultCanvasRef);
-
-    // apply all edits to hi-res version
-    history.slice(0, currentHistoryIndex + 1).forEach((editItem) => {
-      applyEdit(editItem);
-    });
-
-    // Get the canvas
-    const canvas = resultCanvasRef.current;
-    if (!canvas) return; // Return if no canvas is found
-
-    // Create image URL
-    const imageUrl = canvas.toDataURL("image/png");
-
-    // Create a temporary link to trigger the download
-    const downloadLink = document.createElement("a");
-    downloadLink.href = imageUrl;
-    downloadLink.download = "result-image.png"; // Set the name of the download file
-
-    // Append to the document, trigger, and remove the link
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-
-    // go back to downsampled version for further edits
-    drawImageOnCanvas(URL.createObjectURL(rgbFile), rgbCanvasRef, true);
-    drawImageOnCanvas(URL.createObjectURL(nirFile), nirCanvasRef, true);
-    additionalFiles.forEach(async (file, index) => {
-      await drawImageOnCanvas(
-        URL.createObjectURL(file.file),
-        additionalCanvasRefs[index],
-        true
-      );
-    });
-    copyCanvasData(previewChangeRef, resultCanvasRef);
-    // Hide loading
-    setDisplayLoading(false);
-  };
- */
+  /*  const downloadImage = async () => {
+     // Redraw rgbCanvas to hi-res version
+     await drawImageOnCanvas(URL.createObjectURL(rgbFile), rgbCanvasRef, false);
+     // Display loading
+     setDisplayLoading(true);
+     // Redraw nirCanvas to hi-res version
+     await drawImageOnCanvas(URL.createObjectURL(nirFile), nirCanvasRef, false);
+     // reference: https://stackoverflow.com/questions/10179815/get-loop-counter-index-using-for-of-syntax-in-javascript
+     for (const [index, file] of additionalFiles.entries()) {
+       await drawImageOnCanvas(
+         URL.createObjectURL(file.file),
+         additionalCanvasRefs[index],
+         false
+       );
+     }
+     copyCanvasData(rgbCanvasRef, resultCanvasRef);
+ 
+     // apply all edits to hi-res version
+     history.slice(0, currentHistoryIndex + 1).forEach((editItem) => {
+       applyEdit(editItem);
+     });
+ 
+     // Get the canvas
+     const canvas = resultCanvasRef.current;
+     if (!canvas) return; // Return if no canvas is found
+ 
+     // Create image URL
+     const imageUrl = canvas.toDataURL("image/png");
+ 
+     // Create a temporary link to trigger the download
+     const downloadLink = document.createElement("a");
+     downloadLink.href = imageUrl;
+     downloadLink.download = "result-image.png"; // Set the name of the download file
+ 
+     // Append to the document, trigger, and remove the link
+     document.body.appendChild(downloadLink);
+     downloadLink.click();
+     document.body.removeChild(downloadLink);
+ 
+     // go back to downsampled version for further edits
+     drawImageOnCanvas(URL.createObjectURL(rgbFile), rgbCanvasRef, true);
+     drawImageOnCanvas(URL.createObjectURL(nirFile), nirCanvasRef, true);
+     additionalFiles.forEach(async (file, index) => {
+       await drawImageOnCanvas(
+         URL.createObjectURL(file.file),
+         additionalCanvasRefs[index],
+         true
+       );
+     });
+     copyCanvasData(previewChangeRef, resultCanvasRef);
+     // Hide loading
+     setDisplayLoading(false);
+   };
+  */
 
 
   const resetCanvas = () => {
@@ -204,10 +204,11 @@ const App = () => {
           </div>
           <div className="preview-canvas">
             <canvas id="dot-layer-canvas" style={{ width: "100%" }} ></canvas>
+            <canvas id="multi-dot-layer-canvas" style={{ width: "100%" }} ></canvas>
           </div>
-          
+
         </div>
-        
+
         <div className="control-panel">
           <Collapsible
             title="Upload Files"
