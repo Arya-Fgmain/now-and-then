@@ -325,27 +325,21 @@ async function apply_dots_on_layers(layers, configs, canvas_name) {
 function ApplyMultiDots({ paths }) {
     const apply_multi_dots = async () => {
         try {
-            const layers = await Promise.all([
-                loadImageAsMat('/layer_0.png'),
-                loadImageAsMat('/layer_1.png'),
-                loadImageAsMat('/layer_2.png'),
-                loadImageAsMat('/layer_3.png'),
-                loadImageAsMat('/layer_4.png'),
-                loadImageAsMat('/layer_5.png'),
-                loadImageAsMat('/layer_6.png'),
-            ]);
+            const layers = await Promise.all(
+                paths.map(path => loadImageAsMat(path))
+            );
 
             const configs = [
                 { "dots_path": "/tex-4000-1.png", "layer_index": 0 },
                 { "dots_path": "/tex-4000-2.png", "layer_index": 2 },
                 { "dots_path": "/tex-4000-3.png", "layer_index": 4 }
             ];
-            await apply_dots_on_layers(layers, configs, "multi-dot-layer-canvas");
+            await apply_dots_on_layers(layers, configs, "dot-layer-canvas");
+
+            layers.forEach(layer => layer.delete());
         } catch (e) {
             console.error(e);
         }
-
-        layers.forEach(layer => layer.delete());
     };
 
     return (
@@ -364,6 +358,7 @@ function ApplyMultiDots({ paths }) {
 function GetLayer({ paths }) {
     let isActiveSelectLayer = false;
     let hasInitialized = false;
+
     const selectLayer = async () => {
         const canvas = document.getElementById('canvas');
         const coordx = document.getElementById('coordx');
@@ -378,18 +373,12 @@ function GetLayer({ paths }) {
             btn_selectLayer.innerText = 'Select';
 
             if (hasInitialized) {
-                const layers = await Promise.all([
-                    loadImageAsMat('/layer_0.png'),
-                    loadImageAsMat('/layer_1.png'),
-                    loadImageAsMat('/layer_2.png'),
-                    loadImageAsMat('/layer_3.png'),
-                    loadImageAsMat('/layer_4.png'),
-                    loadImageAsMat('/layer_5.png'),
-                    loadImageAsMat('/layer_6.png'),
-                ]);
+                const layers = await Promise.all(
+                    paths.map(path => loadImageAsMat(path))
+                );
                 const _x = +coordx.value;
                 const _y = +coordy.value;
-                console.log(layers[2].ucharPtr(_y, _x));
+                // console.log(layers[2].ucharPtr(_y, _x));
 
                 let max_alpha = 0;
                 let max_index = 0;
