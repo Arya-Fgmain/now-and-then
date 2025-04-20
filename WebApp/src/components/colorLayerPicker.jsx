@@ -302,8 +302,6 @@ function merge(dots, layers) {
 
 // async function apply_dots_on_layers(layers, index, dots_path) {
 async function apply_dots_on_layers(layers, configs, canvas_name) {
-    // const layer = layers[index];
-    // const norm_dots = await get_single_masked_dots(layer, dots_path);
     const norm_dots = await get_masked_dots(layers, configs);
     const rgba_img = merge(norm_dots, layers);
 
