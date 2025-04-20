@@ -201,8 +201,7 @@ const App = () => {
             dotStrength={dotStrength} />
           </div>
           <div className="preview-canvas">
-            <canvas id="dot-layer-canvas" style={{ width: "50%" }} ></canvas>
-            <canvas id="multi-dot-layer-canvas" style={{ width: "50%" }} ></canvas>
+            <canvas id="multi-dot-layer-canvas" style={{ width: "100%" }} ></canvas>
           </div>
 
         </div>
@@ -286,6 +285,8 @@ const App = () => {
 
           <GetLayer paths={[...imagePaths]} />
           <ApplyMultiDots paths={[...imagePaths]} />
+
+
         </div>
       </div>
     </div >

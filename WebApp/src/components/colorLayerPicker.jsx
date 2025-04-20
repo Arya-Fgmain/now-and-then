@@ -7,6 +7,8 @@
  * @date 2025-04-17
  */
 
+import React, { useState } from 'react';
+
 function get_alpha_channel(img) {
     const img_vec = new cv.MatVector();
     cv.split(img, img_vec)
@@ -323,6 +325,14 @@ async function apply_dots_on_layers(layers, configs, canvas_name) {
 }
 
 function ApplyMultiDots({ paths }) {
+    const [files, setFiles] = useState({}); // Tracks uploaded files
+
+    const handleFileChange = (event, path) => {
+        const file = event.target.files[0];
+        setFiles(prev => ({ ...prev, [path]: file }));
+        console.log(files);
+    };
+
     const apply_multi_dots = async () => {
         try {
             const layers = await Promise.all(
@@ -334,7 +344,7 @@ function ApplyMultiDots({ paths }) {
                 { "dots_path": "/tex-4000-2.png", "layer_index": 2 },
                 { "dots_path": "/tex-4000-3.png", "layer_index": 4 }
             ];
-            await apply_dots_on_layers(layers, configs, "dot-layer-canvas");
+            await apply_dots_on_layers(layers, configs, "canvas");
 
             layers.forEach(layer => layer.delete());
         } catch (e) {
@@ -343,14 +353,26 @@ function ApplyMultiDots({ paths }) {
     };
 
     return (
-        <div id="apply-multi-dots">
-            <button
-                onClick={apply_multi_dots}
-                className="default-button" id="btn-apply-dots"
-                style={{ padding: "10px 20px", marginTop: "20px", width: "100%" }}
-            >
-                Apply
-            </button>
+        <div class="apply-panel" style={{ marginTop: "20px" }}>
+            <div class="panel-header">
+                {paths.map((path) => (
+                    <div class="row">
+                        <div class="color-cube" style={{ backgroundColor: "red" }}></div>
+                        <div class="row-text">{path}</div>
+                        <input type="file" class="upload-button"
+                            onChange={(e) => handleFileChange(e, path)} />
+                    </div>
+                ))}
+            </div>
+            <div id="apply-multi-dots">
+                <button
+                    onClick={apply_multi_dots}
+                    className="default-button" id="btn-apply-dots"
+                    style={{ padding: "10px 20px", marginTop: "5px", width: "100%" }}
+                >
+                    Apply
+                </button>
+            </div>
         </div>
     );
 }
@@ -395,7 +417,7 @@ function GetLayer({ paths }) {
                     const configs = [
                         { "dots_path": "/tex-4000.png", "layer_index": max_index }
                     ];
-                    await apply_dots_on_layers(layers, configs, "dot-layer-canvas");
+                    await apply_dots_on_layers(layers, configs, "canvas");
                 } catch (e) {
                     console.error(e);
                 }
