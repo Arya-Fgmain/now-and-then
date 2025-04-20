@@ -55,23 +55,25 @@ function OpenCVView({ imagePaths, dotStrength }) {
       const dots_norm = new cv.Mat();
       cv.normalize(dots_float, dots_norm, 0.0, 1.0, cv.NORM_MINMAX);
 
-      /* dilation & erosion <=> modifying dot intensity*/
-
-      //important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
-      // const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5, 5));
-      // let erd = new cv.Mat();
-      // cv.erode(dotsF, erd, dotStrength.settings["Dot Size"]);
-      // let dil = new cv.Mat();
-      // cv.dilate(dotsF, dil, dotStrength.settings["Dot Size"]);
-      // cv.imshow(canvas, dil);
-      // kern.delete();
-      // erd.delete();
-      // dil.delete();
 
       // scale the dot pattern to image size for easy merging
       let dotsF = new cv.Mat();
       let dsize = new cv.Size(layers[0].mat.cols, layers[0].mat.rows);
       cv.resize(dots_norm, dotsF, dsize, 0, 0, cv.INTER_CUBIC);
+
+      /* dilation & erosion <=> modifying dot intensity*/
+
+      //important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
+      const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(dotStrength.Settings["Dot Size"], dotStrength.Settings["Dot Size"]));
+      let erd = new cv.Mat();
+      cv.erode(dotsF, erd, kern);
+      let dil = new cv.Mat();
+      cv.dilate(dotsF, dil, kern);
+      cv.imshow(canvas, dil);
+      kern.delete();
+      erd.delete();
+      dil.delete();
+
 
       for (let i = 0; i < layers.length; i++) {
         const curr_layer = layers[i].mat;
