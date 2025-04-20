@@ -395,7 +395,6 @@ function GetLayer({ paths }) {
                     const configs = [
                         { "dots_path": "/tex-4000.png", "layer_index": max_index }
                     ];
-                    // await apply_dots_on_layers(layers, max_index, "/tex-4000.png");
                     await apply_dots_on_layers(layers, configs, "dot-layer-canvas");
                 } catch (e) {
                     console.error(e);
