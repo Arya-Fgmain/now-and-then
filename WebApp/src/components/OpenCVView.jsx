@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 
-function OpenCVView({ imagePaths }) {
+function OpenCVView({ imagePaths, dotStrength }) {
   const canvasRef = useRef();
 
   useEffect(() => {
@@ -57,12 +57,12 @@ function OpenCVView({ imagePaths }) {
 
       /* dilation & erosion <=> modifying dot intensity*/
 
-      // important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
+      //important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
       // const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5, 5));
       // let erd = new cv.Mat();
-      // cv.erode(dotsF, erd, kern);
+      // cv.erode(dotsF, erd, dotStrength.settings["Dot Size"]);
       // let dil = new cv.Mat();
-      // cv.dilate(dotsF, dil, kern);
+      // cv.dilate(dotsF, dil, dotStrength.settings["Dot Size"]);
       // cv.imshow(canvas, dil);
       // kern.delete();
       // erd.delete();
@@ -192,7 +192,7 @@ function OpenCVView({ imagePaths }) {
     };
 
     processImages();
-  }, [imagePaths]);
+  }, [imagePaths, dotStrength]);
 
   return (
     <div>

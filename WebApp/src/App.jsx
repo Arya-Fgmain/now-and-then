@@ -7,10 +7,7 @@ import TextureSelector, { imageOptions } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
 import GetLayer from "./components/colorLayerPicker";
 import {
-  defaultDotStength,
-  defaultFilter,
-  defaultLABColoring,
-  defaultSliders,
+  defaultDotStrength,
   defaultXYZColoring,
 } from "./utils/defaultSliderValues";
 import "./App.css";
@@ -31,7 +28,7 @@ const App = () => {
   // Initial values for sliders(traditional xyz transform matrix)
   const [XYZSliders, setXYZSliders] = useState(defaultXYZColoring);
 
-  const [DotStength, setDotStength] = useState(defaultDotStength)
+  const [dotStrength, setDotStrength] = useState(defaultDotStrength)
 
   //Initial value for background
   //const [backgroundColor, setBackgroundColor] = useState(defualtBackgroundColor)
@@ -200,7 +197,8 @@ const App = () => {
         {/* <h3>OpenCV Image Mixer</h3> */}
         <div className="canvas-container">
           <div className="result-canvas"><OpenCVView
-            imagePaths={[...imagePaths, texture]} />
+            imagePaths={[...imagePaths, texture]} 
+            dotStrength={dotStrength}/>
           </div>
           <div className="preview-canvas">
             <canvas id="dot-layer-canvas" style={{ width: "100%" }} ></canvas>
@@ -262,19 +260,20 @@ const App = () => {
             title="Dot Settings"
             openTool={openTool}
             setOpenTool={setOpenTool}
-            setSliderValues={setDotStength}
+            setSliderValues={setDotStrength}
             type="DotStrength"
             resetAdditionalSliders={resetAdditionalSliders}
           >
             <Sliders
               type="DotStrength"
-              sliderValues={DotStength}
-              setSliderValues={setDotStength}
+              sliderValues={dotStrength}
+              setSliderValues={setDotStrength}
               additionalFiles={additionalFiles}
               additionalFilesSliders={additionalFilesSliders}
               setAdditionalFilesSliders={setAdditionalFilesSliders}
               resetAdditionalSliders={resetAdditionalSliders}
             />
+            <p>{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
 
           <button

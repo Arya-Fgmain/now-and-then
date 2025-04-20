@@ -18,13 +18,11 @@ export const defaultFilter = {
   },
 };
 
-export const defaultDotStength = {
-  settings: {
-    "Dot Strength": 1,
-    "Dot Oppacity": 1,
-
+export const defaultDotStrength = {
+  Settings: {
+    "Dot Size": 5,
   }
-}
+};
 
 export const defaultXYZColoring = {
   background: { Red: 41.2453, Green: 35.758, Blue: 18.0423 },
@@ -45,5 +43,5 @@ export const defaultSliders = {
 
   XYZColoring: defaultXYZColoring,
   
-  DotStrength: defaultDotStength,
+  DotStrength: defaultDotStrength,
 };
