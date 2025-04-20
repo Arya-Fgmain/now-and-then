@@ -39,9 +39,7 @@ function get_rgb_mat(img) {
 
     // // manually keep only first 3
     const vec = new cv.MatVector();
-    vec.push_back(channels.get(0));
-    vec.push_back(channels.get(1));
-    vec.push_back(channels.get(2));
+    for (let i = 0; i < 3; ++i) vec.push_back(channels.get(i));
 
     // merge into final RGB result
     const rst = new cv.Mat();
@@ -68,45 +66,37 @@ function loadImageAsMat(path) {
 }
 
 function im2norm(img) {
-    const f_mat = new cv.Mat();
-    img.convertTo(f_mat, cv.CV_32FC4);
+    const rst = new cv.Mat();
 
-    const norm_mat = new cv.Mat();
-    cv.normalize(f_mat, norm_mat, 0.0, 1.0, cv.NORM_MINMAX);
+    img.convertTo(rst, cv.CV_32FC4);
+    cv.normalize(rst, rst, 0.0, 1.0, cv.NORM_MINMAX);
 
-    f_mat.delete();
-
-    return norm_mat;
+    return rst;
 }
 
-function initialize(layer) {
+function layer_init(layer) {
     const norm_layer = im2norm(layer);
-    const target_alpha = get_alpha_channel(norm_layer);
+    const alpha_channel = get_alpha_channel(norm_layer);
 
     // now quantize (based on Yagiz's method in 361, the first MATLAB lecture; ask Arya if you wanna see it)
-    let temp = new cv.Mat();
+    let rst = new cv.Mat();
     cv.multiply(
-        target_alpha,
-        new cv.Mat(target_alpha.rows,
-            target_alpha.cols,
-            target_alpha.type(),
+        alpha_channel,
+        new cv.Mat(alpha_channel.rows,
+            alpha_channel.cols,
+            alpha_channel.type(),
             [5, 5, 5, 0]),
-        temp);
-    temp.convertTo(temp, cv.CV_8U);
-
-    // contains quantized alpha map, which we will turn into masks for different dot sizes
-    let quantized = new cv.Mat();
-    temp.convertTo(quantized, cv.CV_32F, 1 / 5.0);
+        rst);
+    rst.convertTo(rst, cv.CV_8U);
+    rst.convertTo(rst, cv.CV_32F, 1 / 5.0);
 
     norm_layer.delete();
-    temp.delete();
-    // target_chans.delete();
-    target_alpha.delete();
+    alpha_channel.delete();
 
-    return quantized;
+    return rst;
 }
 
-function buildMask(src, levels) {
+function build_masks(src, levels) {
     return levels.map(level => {
         let scale_level = new cv.Mat(
             src.rows,
@@ -114,22 +104,19 @@ function buildMask(src, levels) {
             src.type(),
             [level, level, level, 0]
         );
-        let mask = new cv.Mat();
-        cv.inRange(src, scale_level, scale_level, mask);
+        let mask_channel = new cv.Mat();
+        cv.inRange(src, scale_level, scale_level, mask_channel);
 
-        let channels = new cv.MatVector();
-        for (let i = 0; i < 4; ++i) channels.push_back(mask);
-
-        let merged = new cv.Mat();
-        cv.merge(channels, merged);
+        let vec = new cv.MatVector();
+        for (let i = 0; i < 4; ++i) vec.push_back(mask_channel);
 
         let rst = new cv.Mat();
-        merged.convertTo(rst, cv.CV_32FC4);
+        cv.merge(vec, rst);
+        rst.convertTo(rst, cv.CV_32FC4);
 
         scale_level.delete();
-        mask.delete();
-        channels.delete();
-        merged.delete();
+        mask_channel.delete();
+        vec.delete();
 
         return rst;
     });
@@ -144,17 +131,17 @@ function dots_init(layer, dots) {
 
     const y_max = norm_dots.cols - layer.cols;
     const x_max = norm_dots.rows - layer.rows;
-    const crop_area = new cv.Rect(
+    const area = new cv.Rect(
         Math.floor(Math.random() * y_max),
         Math.floor(Math.random() * x_max),
         layer.cols,
         layer.rows
     );
 
-    console.log(crop_area);
+    console.log(area);
 
     let rst = new cv.Mat();
-    rst = norm_dots.roi(crop_area);
+    rst = norm_dots.roi(area);
 
     pruned_dots.delete();
     norm_dots.delete();
@@ -181,7 +168,7 @@ function dots_for_quantized_levels(dots, num_levels) {
     return rst;
 }
 
-function apply_dots_on_mask(dot_strength, masks) {
+function apply_dots_on_masks(dot_strength, masks) {
     // initialize this with zeros, otherwise the results will be all over the place (seriously)
     let rst = new cv.Mat.zeros(
         masks[0].rows,
@@ -210,22 +197,66 @@ function apply_dots_on_mask(dot_strength, masks) {
     return rst;
 }
 
+async function get_single_masked_dots(layer, dots_path) {
+    const quantized = layer_init(layer);
+    const masks = build_masks(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
+    const dots = await loadImageAsMat(dots_path);
+    const crop_dots = dots_init(layer, dots);
+    const dot_strength = dots_for_quantized_levels(crop_dots, 5);
+    const norm_dots = apply_dots_on_masks(dot_strength, masks);
+
+    quantized.delete();
+    masks.forEach(mask => mask.delete());
+    dots.delete();
+    crop_dots.delete();
+    dot_strength.forEach(dots => dots.delete());
+
+    return norm_dots;
+}
+
+/* Suppose the dots_paths is a list of dict with a fixed format:
+ * dots_paths = {
+ *   "dots_path": "<texture-path>",
+ *   "layer_index": layer_index
+ * } 
+ */
+async function get_masked_dots(layers, configs) {
+    let rst = new cv.Mat.zeros(
+        layers[0].rows,
+        layers[0].cols,
+        cv.CV_32FC4,
+    );
+
+    for (const config of configs) {
+        const norm_dots = await get_single_masked_dots(
+            layers[config["layer_index"]],
+            config["dots_path"]
+        );
+        cv.add(rst, norm_dots, rst);
+        norm_dots.delete();
+    }
+
+    cv.imshow("multi-dot-layer-canvas", rst);
+
+    return rst;
+}
+
 function merge(dots, layers) {
     let is_first = false;
     let result = new cv.Mat();
 
     layers.forEach(layer => {
         const norm_layer = im2norm(layer)
-        const alpha_mult = get_alpha_mat(norm_layer);
+        const alpha_mat = get_alpha_mat(norm_layer);
 
         /* create gamma 1 */
         // must modulate hf by alpha_mult
         const gamma_2 = new cv.Mat();
-        cv.multiply(dots, alpha_mult, gamma_2);
+        cv.multiply(dots, alpha_mat, gamma_2);
 
         /* create gamma 2 */
         const gamma_1 = new cv.Mat();
-        cv.subtract(alpha_mult, gamma_2, gamma_1);
+        cv.subtract(alpha_mat, gamma_2, gamma_1);
 
         /* mult & add */
         // foreground color (dots)
@@ -233,7 +264,7 @@ function merge(dots, layers) {
             norm_layer.rows,
             norm_layer.cols,
             cv.CV_32FC4,
-            new cv.Scalar(0.5, 0.5, 0.5, 1.0)
+            [0.5, 0.5, 0.5, 1]
         );
         const colors_fg = new cv.Mat();
         cv.multiply(dots_color, gamma_2, colors_fg);
@@ -257,7 +288,7 @@ function merge(dots, layers) {
 
         // free memory (good ol' C++ <3)
         norm_layer.delete();
-        alpha_mult.delete();
+        alpha_mat.delete();
         gamma_1.delete();
         gamma_2.delete();
         dots_color.delete();
@@ -269,14 +300,11 @@ function merge(dots, layers) {
     return result;
 }
 
-async function apply_dots_on_layer(layers, index) {
-    const layer = layers[index];
-    const quantized = initialize(layer);
-    const masks = buildMask(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
-    const dots = await loadImageAsMat("/tex-4000.png");
-    const crop_dots = dots_init(layer, dots);
-    const dot_strength = dots_for_quantized_levels(crop_dots, 5);
-    const norm_dots = apply_dots_on_mask(dot_strength, masks);
+// async function apply_dots_on_layers(layers, index, dots_path) {
+async function apply_dots_on_layers(layers, configs, canvas_name) {
+    // const layer = layers[index];
+    // const norm_dots = await get_single_masked_dots(layer, dots_path);
+    const norm_dots = await get_masked_dots(layers, configs);
     const rgba_img = merge(norm_dots, layers);
 
     /* important: one final OpenCV dance before we can display everything
@@ -290,15 +318,49 @@ async function apply_dots_on_layer(layers, index) {
     cv.normalize(rgb_img, rgb_img, 0, 255, cv.NORM_MINMAX);
     rgb_img.convertTo(rgb_img, cv.CV_8UC3);
 
-    cv.imshow("dot-layer-canvas", rgb_img);
+    cv.imshow(canvas_name, rgb_img);
 
-    quantized.delete();
-    masks.forEach(mask => mask.delete());
-    dots.delete();
-    crop_dots.delete();
-    dot_strength.forEach(dot => dot.delete());
     norm_dots.delete();
     rgb_img.delete();
+}
+
+function ApplyMultiDots({ paths }) {
+    const apply_multi_dots = async () => {
+        try {
+            const layers = await Promise.all([
+                loadImageAsMat('/layer_0.png'),
+                loadImageAsMat('/layer_1.png'),
+                loadImageAsMat('/layer_2.png'),
+                loadImageAsMat('/layer_3.png'),
+                loadImageAsMat('/layer_4.png'),
+                loadImageAsMat('/layer_5.png'),
+                loadImageAsMat('/layer_6.png'),
+            ]);
+
+            const configs = [
+                { "dots_path": "/tex-4000-1.png", "layer_index": 0 },
+                { "dots_path": "/tex-4000-2.png", "layer_index": 2 },
+                { "dots_path": "/tex-4000-3.png", "layer_index": 4 }
+            ];
+            await apply_dots_on_layers(layers, configs, "multi-dot-layer-canvas");
+        } catch (e) {
+            console.error(e);
+        }
+
+        layers.forEach(layer => layer.delete());
+    };
+
+    return (
+        <div id="apply-multi-dots">
+            <button
+                onClick={apply_multi_dots}
+                className="default-button" id="btn-apply-dots"
+                style={{ padding: "10px 20px", marginTop: "20px", width: "100%" }}
+            >
+                Apply
+            </button>
+        </div>
+    );
 }
 
 function GetLayer({ paths }) {
@@ -309,7 +371,6 @@ function GetLayer({ paths }) {
         const coordx = document.getElementById('coordx');
         const coordy = document.getElementById('coordy');
         const btn_selectLayer = document.getElementById('btn-select-layer');
-        const dot_layer_canvas = document.getElementById('dot-layer-canvas');
         const scale = 0.6
 
         if (!canvas) return;
@@ -344,7 +405,11 @@ function GetLayer({ paths }) {
                 console.log(`idx=${max_index}, alpha=${max_alpha}`)
 
                 try {
-                    await apply_dots_on_layer(layers, max_index);
+                    const configs = [
+                        { "dots_path": "/tex-4000.png", "layer_index": max_index }
+                    ];
+                    // await apply_dots_on_layers(layers, max_index, "/tex-4000.png");
+                    await apply_dots_on_layers(layers, configs, "dot-layer-canvas");
                 } catch (e) {
                     console.error(e);
                 }
@@ -400,4 +465,4 @@ function GetLayer({ paths }) {
     );
 }
 
-export default GetLayer;
+export { GetLayer, ApplyMultiDots };
