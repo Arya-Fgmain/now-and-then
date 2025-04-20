@@ -5,7 +5,7 @@ import ColorPicker from "./components/colorPicker";
 import ImageUploader from "./components/simpleMultifile";
 import TextureSelector, { imageOptions } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
-import GetLayer from "./components/colorLayerPicker";
+import { GetLayer, ApplyMultiDots } from "./components/colorLayerPicker";
 import {
   defaultDotStength,
   defaultFilter,
@@ -286,6 +286,7 @@ const App = () => {
           </button>
 
           <GetLayer paths={[...imagePaths]} />
+          <ApplyMultiDots paths={[...imagePaths]} />
         </div>
       </div>
     </div >
