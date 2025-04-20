@@ -277,7 +277,7 @@ function GetLayer({ paths }) {
                     const layer = layers[max_index];
                     const quantized = await initialize(layer);
                     const masks = await buildMask(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
-                    const dots = await loadImageAsMat("/tex-4000.png");
+                    const dots = await loadImageAsMat("/sample_fixpat2.png");
                     const crop_dots = await dots_init(layer, dots);
                     const dot_strength = await dots_for_quantized_levels(crop_dots, 5);
 
@@ -308,9 +308,31 @@ function GetLayer({ paths }) {
                     cv.normalize(dots_combined, dots_c_norm, 0.0, 1.0, cv.NORM_MINMAX);
 
                     const result = await merge(dots_c_norm, layers);
+                    
+                                        /*  important: one final OpenCV dance before we can display everything
+                        right now the alpha layer has all sorts of garbage data, which, if not removed, will make the image look very weird
+                    */
 
-                    // delete dots_cropped, replace it with this
-                    cv.imshow(dot_layer_canvas, result);
+                    // Remove alpha (keep only RGB)
+                    const allChannels = new cv.MatVector();
+                    cv.split(result, allChannels);
+
+                    // manually keep only first 3
+                    const rgbVec = new cv.MatVector();
+                    rgbVec.push_back(allChannels.get(0));
+                    rgbVec.push_back(allChannels.get(1));
+                    rgbVec.push_back(allChannels.get(2));
+
+                    // merge into final RGB result
+                    const rgbOnly = new cv.Mat();
+                    cv.merge(rgbVec, rgbOnly);
+
+                    // Normalize once at the end
+                    const finalDisplay = new cv.Mat();
+                    cv.normalize(rgbOnly, finalDisplay, 0, 255, cv.NORM_MINMAX);
+                    finalDisplay.convertTo(finalDisplay, cv.CV_8UC3);
+
+                    cv.imshow(dot_layer_canvas, finalDisplay);
 
                     quantized.delete();
                     masks.forEach(mask => mask.delete());
@@ -319,6 +341,10 @@ function GetLayer({ paths }) {
                     dot_strength.forEach(dot => dot.delete());
                     dots_combined.delete();
                     dots_c_norm.delete();
+                    allChannels.delete();
+                    rgbVec.delete();
+                    rgbOnly.delete();
+                    finalDisplay.delete();
 
                 } catch (e) {
                     console.error(e);
