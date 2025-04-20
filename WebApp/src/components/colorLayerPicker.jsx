@@ -53,13 +53,22 @@ function get_rgb_mat(img) {
     return rst;
 }
 
-function loadImageAsMat(path) {
+function loadImageAsMat(source) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.src = path;
+        if (source instanceof File) {
+            img.src = URL.createObjectURL(source);
+        } else {
+            img.src = source;
+        }
+        // img.src = source;
         img.onload = () => {
             const mat = cv.imread(img);
             resolve(mat);
+
+            if (source instanceof File) {
+                URL.revokeObjectURL(img.src);
+            }
         };
         img.onerror = (err) => {
             reject(err);
@@ -311,7 +320,6 @@ async function apply_dots_on_layers(layers, configs, canvas_name) {
      * right now the alpha layer has all sorts of garbage data, which, 
      * if not removed, will make the image look very weird
      */
-
     const rgb_img = get_rgb_mat(rgba_img);
 
     // Normalize once at the end
@@ -339,27 +347,37 @@ function ApplyMultiDots({ paths }) {
                 paths.map(path => loadImageAsMat(path))
             );
 
-            const configs = [
-                { "dots_path": "/tex-4000-1.png", "layer_index": 0 },
-                { "dots_path": "/tex-4000-2.png", "layer_index": 2 },
-                { "dots_path": "/tex-4000-3.png", "layer_index": 4 }
-            ];
+            let configs = [];
+            for (const [layer_path, file] of Object.entries(files)) {
+                const index = paths.indexOf(layer_path);
+                console.log(file);
+                configs.push({
+                    "dots_path": file,
+                    "layer_index": index
+                })
+            }
+
+            // const configs = [
+            //     { "dots_path": "/tex-4000-1.png", "layer_index": 0 },
+            //     { "dots_path": "/tex-4000-2.png", "layer_index": 2 },
+            //     { "dots_path": "/tex-4000-3.png", "layer_index": 4 }
+            // ];
             await apply_dots_on_layers(layers, configs, "canvas");
 
             layers.forEach(layer => layer.delete());
         } catch (e) {
-            console.error(e);
+            console.error(e.name, e.message, e.stack);
         }
     };
 
     return (
-        <div class="apply-panel" style={{ marginTop: "20px" }}>
-            <div class="panel-header">
-                {paths.map((path) => (
-                    <div class="row">
-                        <div class="color-cube" style={{ backgroundColor: "red" }}></div>
-                        <div class="row-text">{path}</div>
-                        <input type="file" class="upload-button"
+        <div className="apply-panel" style={{ marginTop: "20px" }}>
+            <div className="panel-header">
+                {paths.map((path, index) => (
+                    <div className="row">
+                        <div className="color-cube" style={{ backgroundColor: "red" }}></div>
+                        <div className="row-text">{path}</div>
+                        <input type="file" className="upload-button"
                             onChange={(e) => handleFileChange(e, path)} />
                     </div>
                 ))}
@@ -386,7 +404,7 @@ function GetLayer({ paths }) {
         const coordx = document.getElementById('coordx');
         const coordy = document.getElementById('coordy');
         const btn_selectLayer = document.getElementById('btn-select-layer');
-        const scale = 0.6
+        const scale = 1;
 
         if (!canvas) return;
 

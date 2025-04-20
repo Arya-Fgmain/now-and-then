@@ -201,6 +201,7 @@ const App = () => {
             dotStrength={dotStrength} />
           </div>
           <div className="preview-canvas">
+            {/* <canvas id="draft-canvas" style={{ width: "100%" }} ></canvas> */}
             <canvas id="multi-dot-layer-canvas" style={{ width: "100%" }} ></canvas>
           </div>
 
