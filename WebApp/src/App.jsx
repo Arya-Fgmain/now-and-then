@@ -150,7 +150,7 @@ const App = () => {
   };
 
   // setup function to resize result and preview canvas when window is resized
-  useEffect(() => {
+/*   useEffect(() => {
     const handleResizeCanvas = () => {
       // resize canvas to appropriate size
       const resultCanvas = resultCanvasRef.current;
@@ -194,7 +194,7 @@ const App = () => {
     return () => {
       window.removeEventListener("resize", handleResizeCanvas);
     };
-  }, []);
+  }, []); */
 
   return (
     <div className="container">
@@ -216,6 +216,7 @@ const App = () => {
 
         <div className="control-panel">
           <Collapsible
+            setSliderValues={()=>{}}
             title="Upload Files"
             openTool={openTool}
             setOpenTool={setOpenTool}>
@@ -226,6 +227,7 @@ const App = () => {
           </Collapsible>
 
           {<Collapsible
+            setSliderValues={()=>{}}
             title="Texture Options"
             openTool={openTool}
             setOpenTool={setOpenTool}
@@ -237,6 +239,7 @@ const App = () => {
           </Collapsible>}
 
           {<Collapsible
+            setSliderValues={()=>{}}
             title="Dot Color"
             openTool={openTool}
             setOpenTool={setOpenTool}
@@ -272,6 +275,7 @@ const App = () => {
           </Collapsible>
 
           {<Collapsible
+            setSliderValues={()=>{}}
             title="Quantization Layers"
             openTool={openTool}
             setOpenTool={setOpenTool}
