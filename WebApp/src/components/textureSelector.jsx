@@ -14,8 +14,13 @@ export const imageOptions = [
   { name: 'pure dots 2', url: '/sample_fixpat2.png' },
   { name: 'high dpi', url: '/sample_highdpi.png' },
   { name: 'low dpi', url: '/sample_lowdpi.png' },
-  
+
   { name: 'gouache', url: '/sample_kingdom.png' },
+
+  { name: '1930s', url: '/tex-4000-30s.png' },
+  { name: '1940s', url: '/tex-4000-40s.png' },
+  { name: '1970s', url: '/tex-4000-70s.png' },
+  { name: '1990s', url: '/tex-4000-90s.png' },
 ];
 
 function TextureSelector({ texture, setTexture }) {
@@ -38,6 +43,7 @@ function TextureSelector({ texture, setTexture }) {
         <img
           src={texture}
           alt="Selected"
+          id="texture-preview"
           style={{ width: '300px', border: '1px solid #ccc' }}
         />
       </div>

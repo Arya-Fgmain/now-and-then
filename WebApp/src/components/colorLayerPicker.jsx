@@ -76,11 +76,11 @@ function loadImageAsMat(source) {
     });
 }
 
-function im2norm(img) {
+function im2norm(img, lb = 0, rb = 1) {
     const rst = new cv.Mat();
 
     img.convertTo(rst, cv.CV_32FC4);
-    cv.normalize(rst, rst, 0.0, 1.0, cv.NORM_MINMAX);
+    cv.normalize(rst, rst, lb, rb, cv.NORM_MINMAX);
 
     return rst;
 }
@@ -133,8 +133,9 @@ function build_masks(src, levels) {
     });
 }
 
-function dots_init(layer, dots) {
-    const norm_dots = im2norm(dots);
+function dots_init(layer, dots, lb = 0, rb = 1) {
+    console.log(lb, rb);
+    const norm_dots = im2norm(dots, lb, rb);
     const pruned_dots = new cv.Mat();
     const layer_size = new cv.Size(layer.cols, layer.rows);
 
@@ -208,7 +209,7 @@ function apply_dots_on_masks(dot_strength, masks) {
     return rst;
 }
 
-async function get_single_masked_dots(layer, dots_path, dots_size) {
+async function get_single_masked_dots(layer, dots_path, dots_size, lb = 0, rb = 1) {
     const quantized = layer_init(layer);
     // const levels = Array.from({
     //     length: num_dots_strength
@@ -216,7 +217,7 @@ async function get_single_masked_dots(layer, dots_path, dots_size) {
     // console.log(levels);
     const masks = build_masks(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
     const dots = await loadImageAsMat(dots_path);
-    const crop_dots = dots_init(layer, dots);
+    const crop_dots = dots_init(layer, dots, lb, rb);
     const dot_strength = dots_for_quantized_levels(crop_dots, 5);
     const norm_dots = apply_dots_on_masks(dot_strength, masks);
 
@@ -235,7 +236,7 @@ async function get_single_masked_dots(layer, dots_path, dots_size) {
  *   "layer_index": layer_index
  * } 
  */
-async function get_masked_dots(layers, configs, dots_size) {
+async function get_masked_dots(layers, configs, dots_size, lb = 0, rb = 1) {
     let rst = new cv.Mat.zeros(
         layers[0].rows,
         layers[0].cols,
@@ -246,7 +247,9 @@ async function get_masked_dots(layers, configs, dots_size) {
         const norm_dots = await get_single_masked_dots(
             layers[config["layer_index"]],
             config["dots_path"],
-            dots_size
+            dots_size,
+            lb,
+            rb
         );
         cv.add(rst, norm_dots, rst);
         norm_dots.delete();
@@ -330,7 +333,9 @@ async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
 
     const dots_size = 1 + get_dots_size();
     const dot_color1 = get_dots_color();
-    const norm_dots = await get_masked_dots(layers, configs, dots_size);
+    const lb = 0;
+    const rb = 1;
+    const norm_dots = await get_masked_dots(layers, configs, dots_size, lb, rb);
     const rgba_img = merge(norm_dots, layers, dot_color1);
 
     /* important: one final OpenCV dance before we can display everything
@@ -413,7 +418,7 @@ function ApplyMultiDots({ paths }) {
                 {paths.map((path, index) => (
                     <div className="row">
                         {/* <div className="color-cube" style={{ backgroundColor: "red" }}></div> */}
-                        <div className="row-text">{path}</div>
+                        <div className="row-text">layer_{index}</div>
                         <input type="file" className="upload-button"
                             onChange={(e) => handleFileChange(e, path)} />
                     </div>
@@ -468,10 +473,14 @@ function GetLayer({ paths }) {
                     }
                 }
                 console.log(`idx=${max_index}, alpha=${max_alpha}`)
+                const texture_path = document.getElementById("texture-preview").src;
+                console.log(texture_path);
 
                 try {
+                    const path = new URL(texture_path).pathname;
+                    console.log(path);
                     const configs = [
-                        { "dots_path": "/tex-4000.png", "layer_index": max_index }
+                        { "dots_path": path, "layer_index": max_index }
                     ];
                     await apply_dots_on_layers(layers, configs, "canvas", dot_color);
                 } catch (e) {
