@@ -3,7 +3,7 @@ import Collapsible from "./components/Collapsible";
 import Sliders from "./components/Sliders";
 import ColorPicker from "./components/colorPicker";
 import ImageUploader from "./components/simpleMultifile";
-import TextureSelector, { imageOptions } from "./components/textureSelector";
+import TextureSelector, { imageOptions, quantizationLevelOptions, QuantizationLayerSelector } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
 import { GetLayer, ApplyMultiDots } from "./components/colorLayerPicker";
 import {
@@ -47,6 +47,8 @@ const App = () => {
 
   //for textureSelector
   const [texture, setTexture] = useState(imageOptions[0].url);
+
+  const [quantizationLayerCount, setQuantizationLayerCount] = useState(quantizationLevelOptions[0].number);
 
   const [zoomScale, setZoomScale] = useState(1);
 
@@ -233,6 +235,30 @@ const App = () => {
               setTexture={setTexture}
             />}
           </Collapsible>}
+
+          {<Collapsible
+            title="Quantization Layers"
+            openTool={openTool}
+            setOpenTool={setOpenTool}
+          >
+            
+            {<QuantizationLayerSelector
+              quantizationLayerCount={quantizationLayerCount}
+              setQuantizationLayerCount={setQuantizationLayerCount}
+            />}
+          </Collapsible>}
+          
+          {<Collapsible
+            title="Layer Count"
+            openTool={openTool}
+            setOpenTool={setOpenTool}
+          >
+            {<TextureSelector
+              texture={texture}
+              setTexture={setTexture}
+            />}
+          </Collapsible>}
+
           {<Collapsible
             title="Dot Color"
             openTool={openTool}
