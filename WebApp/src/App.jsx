@@ -1,14 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState} from "react";
 import Collapsible from "./components/Collapsible";
 import Sliders from "./components/Sliders";
 import ColorPicker from "./components/colorPicker";
 import ImageUploader from "./components/simpleMultifile";
 import TextureSelector, { imageOptions, quantizationLevelOptions, QuantizationLayerSelector } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
-import { GetLayer, ApplyMultiDots, ApplyOnWholePage } from "./components/colorLayerPicker";
+import { GetLayer, ApplyMultiDots, ApplyOnWholePage, handleDownload } from "./components/colorLayerPicker";
 import {
   defaultDotStrength,
-  defaultXYZColoring,
 } from "./utils/defaultSliderValues";
 import "./App.css";
 
@@ -25,18 +24,7 @@ const App = () => {
   // track openTool to only expand one collapsible element
   const [openTool, setOpenTool] = useState("");
 
-  // Initial values for sliders(traditional xyz transform matrix)
-  const [XYZSliders, setXYZSliders] = useState(defaultXYZColoring);
-
   const [dotStrength, setDotStrength] = useState(defaultDotStrength)
-
-
-  //background color = backgroundColor
-  // color of dots = dotsColor
-  // URLs corresponding to the image in the form of a string = imagePaths
-  // strength of dots in range 1 to 10 default 5 = dotStrength. access by dotStrength.Settings["Dot Size"]
-  //
-
 
   //Initial value for background
   //const [dotsColor, setDotsColor] = useState(defualtDotsColor)
@@ -49,46 +37,6 @@ const App = () => {
   const [texture, setTexture] = useState(imageOptions[0].url);
 
   const [quantizationLayerCount, setQuantizationLayerCount] = useState(quantizationLevelOptions[0].number);
-
-  const [zoomScale, setZoomScale] = useState(1);
-
-  // pointers to the canvases
-  const resultCanvasRef = useRef(null);
-  const previewChangeRef = useRef(null);
-
-  const resetAdditionalSliders = () => {
-    setAdditionalFilesSliders((prevValues) => {
-      let newSliders = {
-        linearCombination: {},
-        XYZColoring: {},
-        HSVColoring: {},
-        LABColoring: {},
-      };
-      additionalFiles
-        .map((file) => file.type)
-        .forEach((type) => {
-          newSliders.linearCombination = {
-            ...newSliders.linearCombination,
-            [type]: { red: 0, green: 0, blue: 0 },
-          };
-          newSliders.XYZColoring = {
-            ...newSliders.XYZColoring,
-            [type]: { X: 0, Y: 0, Z: 0 },
-          };
-          newSliders.HSVColoring = {
-            ...newSliders.HSVColoring,
-            [type]: { values: 0 },
-          };
-          newSliders.LABColoring = {
-            ...newSliders.LABColoring,
-            [type]: { values: 0 },
-          };
-        });
-
-      return newSliders;
-    });
-  };
-
 
 
   return (
@@ -157,7 +105,7 @@ const App = () => {
             setOpenTool={setOpenTool}
             setSliderValues={setDotStrength}
             type="DotStrength"
-            resetAdditionalSliders={resetAdditionalSliders}
+            resetAdditionalSliders={()=>{}}
           >
             <Sliders
               type="DotStrength"
@@ -166,32 +114,32 @@ const App = () => {
               additionalFiles={additionalFiles}
               additionalFilesSliders={additionalFilesSliders}
               setAdditionalFilesSliders={setAdditionalFilesSliders}
-              resetAdditionalSliders={resetAdditionalSliders}
+              resetAdditionalSliders={()=>{}}
               applyEdit={() => { }}
             />
             <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
 
-          {<Collapsible
-            setSliderValues={() => { }}
-            title="Quantization Levels"
-            openTool={openTool}
-            setOpenTool={setOpenTool}
-          >
-
-            {<QuantizationLayerSelector
-              quantizationLayerCount={quantizationLayerCount}
-              setQuantizationLayerCount={setQuantizationLayerCount}
-            />}
-          </Collapsible>}
-
           <ApplyOnWholePage paths={[...imagePaths]} />
+          <div style={{ marginBottom: '5px' }}>
+            {<Collapsible
+              setSliderValues={() => { }}
+              title="Quantization Levels"
+              openTool={openTool}
+              setOpenTool={setOpenTool}
+            >
+              {<QuantizationLayerSelector
+                quantizationLayerCount={quantizationLayerCount}
+                setQuantizationLayerCount={setQuantizationLayerCount}
+              />}
+            </Collapsible>}
+          </div>
           <GetLayer paths={[...imagePaths]} />
           <ApplyMultiDots paths={[...imagePaths]} />
           
           <hr/>
           <button
-            //onClick={downloadImage}
+            onClick={handleDownload}
             className="default-button"
             style={{ padding: "10px 20px"}}
           >

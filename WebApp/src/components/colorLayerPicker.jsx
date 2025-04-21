@@ -534,7 +534,7 @@ function ApplyMultiDots({ paths }) {
 
     return (
         <div className="apply-panel" style={{ marginTop: "20px" }}>
-
+            <hr />
             <div className="panel-header">
                 {paths.map((path, index) => (
                     <div className="row" key={path}>
@@ -546,11 +546,10 @@ function ApplyMultiDots({ paths }) {
             </div>
             
             <div id="apply-multi-dots">
-                <hr />
                 <button
                     onClick={apply_dots}
                     className="default-button" id="btn-apply-dots"
-                    style={{ padding: "10px 20px", width: "100%" }}
+                    style={{ padding: "10px 20px", marginTop: "10px", width: "100%" }}
                 >
                     Apply Multiple Dot Patterns!
                 </button>
@@ -662,4 +661,15 @@ function GetLayer({ paths }) {
     );
 }
 
-export { GetLayer, ApplyMultiDots, ApplyOnWholePage };
+
+const handleDownload = () => {
+    const canvas = document.getElementById("canvas"); // Or use a ref
+    const image = canvas.toDataURL('image/png'); // You can also use 'image/jpeg'
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = 'output.png'; // Name of the file
+    link.click();
+};
+
+
+export { GetLayer, ApplyMultiDots, ApplyOnWholePage, handleDownload };
