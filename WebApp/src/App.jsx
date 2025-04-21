@@ -30,9 +30,14 @@ const App = () => {
 
   const [dotStrength, setDotStrength] = useState(defaultDotStrength)
 
-  //Initial value for background
-  //const [backgroundColor, setBackgroundColor] = useState(defualtBackgroundColor)
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff')
+
+  //background color = backgroundColor
+  // color of dots = dotsColor
+  // URLs corresponding to the image in the form of a string = imagePaths
+  // strength of dots in range 1 to 10 default 5 = dotStrength. access by dotStrength.Settings["Dot Size"]
+  //
+
+
   //Initial value for background
   //const [dotsColor, setDotsColor] = useState(defualtDotsColor)
   const [dotsColor, setDotsColor] = useState('#000000')
@@ -46,8 +51,6 @@ const App = () => {
   const [zoomScale, setZoomScale] = useState(1);
 
   // pointers to the canvases
-  const nirCanvasRef = useRef(null);
-  const rgbCanvasRef = useRef(null);
   const resultCanvasRef = useRef(null);
   const previewChangeRef = useRef(null);
 
@@ -229,21 +232,6 @@ const App = () => {
               texture={texture}
               setTexture={setTexture}
             />}
-          </Collapsible>}
-          {<Collapsible
-            title="Background Color"
-            openTool={openTool}
-            setOpenTool={setOpenTool}
-            setSliderValues={setXYZSliders}
-            type="DotsStrength"
-            resetAdditionalSliders={resetAdditionalSliders}
-          >
-
-            <ColorPicker
-              color={backgroundColor}
-              setColor={setBackgroundColor}
-            />
-
           </Collapsible>}
           {<Collapsible
             title="Dot Color"
