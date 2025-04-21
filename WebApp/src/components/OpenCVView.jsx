@@ -17,7 +17,6 @@ function get_dots_color(color) {
 
 function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
   const canvasRef = useRef();
-  const dot_colors = get_dots_color(dotsColor);
 
   useEffect(() => {
     console.log("entering use effect")
@@ -25,7 +24,7 @@ function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
     if (!window.cv || !imagePaths || imagePaths.length < 2) return;
 
     const canvas = canvasRef.current;
-    const scale = 1;
+    const dot_colors = get_dots_color(dotsColor);
 
     const loadImageAsMat = (srcPath) => {
       return new Promise((resolve) => {
@@ -33,18 +32,21 @@ function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
         img.src = srcPath;
 
         img.onload = () => {
-          const tempCanvas = document.createElement("canvas");
-          const width = img.width * scale;
-          const height = img.height * scale;
+          // const tempCanvas = document.createElement("canvas");
+          const tempCanvas = document.getElementById("canvas");
+          const width = img.width;
+          const height = img.height;
           tempCanvas.width = width;
           tempCanvas.height = height;
           const tempCtx = tempCanvas.getContext("2d");
           tempCtx.drawImage(img, 0, 0, width, height);
 
           const mat = cv.matFromImageData(tempCtx.getImageData(0, 0, width, height));
-          // IMPORTANT this always reads 4 channels. Even if it's a single-channel grayscale, it just duplicates the channels :)
+          // IMPORTANT this always reads 4 channels.Even if it's a single-channel grayscale, it just duplicates the channels :)
           resolve({ mat, width, height });
         };
+
+        img.remove();
       });
     };
 
@@ -170,13 +172,22 @@ function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
         const sum = new cv.Mat();
         cv.add(colors_bg, colors_fg, sum);
 
-        // if this is the first iteration, need to initialize the 'result' output
+        // // if this is the first iteration, need to initialize the 'result' output
+        // if (!result_initialized) {
+        //   result = sum.clone();
+        //   result_initialized = true;
+        // }
+        // else {
+        //   cv.add(result, sum, result);
+        // }
         if (!result_initialized) {
           result = sum.clone();
           result_initialized = true;
-        }
-        else {
-          cv.add(result, sum, result);
+        } else {
+          let tmp = new cv.Mat();
+          cv.add(result, sum, tmp);
+          result.delete(); // free old result
+          result = tmp;
         }
 
         // // free memory (good ol' C++ <3)
@@ -217,6 +228,7 @@ function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
       // Normalize once at the end
       const finalDisplay = new cv.Mat();
       cv.normalize(rgbOnly, finalDisplay, 0, 255, cv.NORM_MINMAX);
+      rgbOnly.delete();
 
       finalDisplay.convertTo(finalDisplay, cv.CV_8UC3);
 
@@ -229,15 +241,16 @@ function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
       // dots_float.delete();
       // dots_norm.delete();
       // dotsF.delete();
-      result.delete();
+      // result.delete();
       // allChannels.delete();
       // rgbVec.delete();
       // rgbOnly.delete();
-      // finalDisplay.delete();
+      finalDisplay.delete();
     };
 
     processImages();
-  }, [imagePaths, dotStrength, dotsColor]);
+    // }, [imagePaths, dotStrength, dotsColor]);
+  }, []);
 
   return (
     <div>

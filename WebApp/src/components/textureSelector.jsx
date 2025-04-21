@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRef, useEffect } from 'react';
 
 // Export the options so other files can import them too
 export const imageOptions = [
@@ -24,7 +25,7 @@ export const imageOptions = [
 ];
 
 export const quantizationLevelOptions = [
-  { name: 'None', number: '0' },
+  // { name: 'None', number: '0' },
   { name: '2', number: '2' },
   { name: '3', number: '3' },
   { name: '4', number: '4' },
@@ -68,6 +69,10 @@ function TextureSelector({ texture, setTexture, paths }) {
 export default TextureSelector;
 
 function QuantizationLayerSelector({ quantizationLayerCount, setQuantizationLayerCount }) {
+  useEffect(() => {
+    setQuantizationLayerCount("5"); // or any logic
+  }, []);
+
   const handleChange = (e) => {
     setQuantizationLayerCount(e.target.value); // Set the texture selected from the dropdown
   };
@@ -76,7 +81,7 @@ function QuantizationLayerSelector({ quantizationLayerCount, setQuantizationLaye
     <div>
       <label>Select an option: </label>
       <div style={{ marginTop: '5px' }}>
-        <select onChange={handleChange} value={quantizationLayerCount}>
+        <select id="dot-strength-select-text" onChange={handleChange} value={quantizationLayerCount}>
           {quantizationLevelOptions.map((img, index) => (
             <option key={index} value={img.url}>
               {img.name}

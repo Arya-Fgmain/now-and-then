@@ -14,7 +14,10 @@ function get_alpha_channel(img) {
     cv.split(img, img_vec)
 
     // we just need the alpha channel
-    return img_vec.get(3);
+    const channel = img_vec.get(3).clone();
+    img_vec.delete();
+
+    return channel;
 }
 
 function get_alpha_mat(img) {
@@ -91,18 +94,19 @@ function layer_init(layer) {
 
     // now quantize (based on Yagiz's method in 361, the first MATLAB lecture; ask Arya if you wanna see it)
     let rst = new cv.Mat();
-    cv.multiply(
-        alpha_channel,
-        new cv.Mat(alpha_channel.rows,
-            alpha_channel.cols,
-            alpha_channel.type(),
-            [5, 5, 5, 0]),
-        rst);
+    let scale_mat = new cv.Mat(
+        alpha_channel.rows,
+        alpha_channel.cols,
+        alpha_channel.type(),
+        [5, 5, 5, 0]
+    );
+    cv.multiply(alpha_channel, scale_mat, rst);
     rst.convertTo(rst, cv.CV_8U);
     rst.convertTo(rst, cv.CV_32F, 1 / 5);
 
     norm_layer.delete();
     alpha_channel.delete();
+    scale_mat.delete();
 
     return rst;
 }
@@ -161,6 +165,30 @@ function dots_init(layer, dots, lb = 0, rb = 1) {
     return rst;
 }
 
+function dots_adjust_dot_size(dots, dot_size) {
+    /* dilation & erosion <=> modifying dot intensity*/
+    //important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
+    const kernel = cv.getStructuringElement(
+        cv.MORPH_ELLIPSE,
+        new cv.Size(dot_size, dot_size)
+    );
+
+    let erd_dots = new cv.Mat();
+    cv.erode(dots, erd_dots, kernel);
+
+    let dil_dots = new cv.Mat();
+    cv.dilate(dots, dil_dots, kernel);
+
+    // check for dot size modification from the user
+    const rst = dot_size >= 5 ? dil_dots.clone() : erd_dots.clone();
+
+    kernel.delete();
+    erd_dots.delete();
+    dil_dots.delete();
+
+    return rst;
+}
+
 function dots_for_quantized_levels(dots, num_levels) {
     let rst = [];
 
@@ -209,23 +237,42 @@ function apply_dots_on_masks(dot_strength, masks) {
     return rst;
 }
 
-async function get_single_masked_dots(layer, dots_path, dots_size, lb = 0, rb = 1) {
-    const quantized = layer_init(layer);
-    // const levels = Array.from({
-    //     length: num_dots_strength
-    // }, (_, i) => i / (num_dots_strength - 1)).slice(1);
-    // console.log(levels);
-    const masks = build_masks(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
+async function get_whole_layer_masked_dots(layer, dots_path, dot_size, lb = 0, rb = 1) {
     const dots = await loadImageAsMat(dots_path);
     const crop_dots = dots_init(layer, dots, lb, rb);
-    const dot_strength = dots_for_quantized_levels(crop_dots, 5);
-    const norm_dots = apply_dots_on_masks(dot_strength, masks);
-
-    quantized.delete();
-    masks.forEach(mask => mask.delete());
     dots.delete();
+
+    const norm_dots = dots_adjust_dot_size(crop_dots, dot_size);
     crop_dots.delete();
-    dot_strength.forEach(dots => dots.delete());
+
+    return norm_dots;
+}
+
+async function get_single_masked_dots(layer, dots_path, num_levels, lb = 0, rb = 1) {
+    const levels = Array.from({
+        length: num_levels + 1
+    }, (_, i) => i / (num_levels)).slice(1);
+    console.log(levels);
+    const dots = await loadImageAsMat(dots_path);
+    const crop_dots = dots_init(layer, dots, lb, rb);
+    dots.delete();
+
+    const dot_strengths = dots_for_quantized_levels(crop_dots, num_levels);
+    crop_dots.delete();
+
+    const quantized = layer_init(layer);
+    const masks = build_masks(quantized, levels);
+    quantized.delete();
+
+    const norm_dots = apply_dots_on_masks(dot_strengths, masks);
+    masks.forEach(mask => mask.delete());
+    dot_strengths.forEach(dots => dots.delete());
+
+    // quantized.delete();
+    // masks.forEach(mask => mask.delete());
+    // dots.delete();
+    // crop_dots.delete();
+    // dot_strengths.forEach(dots => dots.delete());
 
     return norm_dots;
 }
@@ -236,34 +283,55 @@ async function get_single_masked_dots(layer, dots_path, dots_size, lb = 0, rb = 
  *   "layer_index": layer_index
  * } 
  */
-async function get_masked_dots(layers, configs, dots_size, lb = 0, rb = 1) {
-    let rst = new cv.Mat.zeros(
-        layers[0].rows,
-        layers[0].cols,
-        cv.CV_32FC4,
-    );
+async function get_masked_dots(
+    layers,
+    configs,
+    dot_size,
+    num_levels,
+    whole = false,
+    lb = 0,
+    rb = 1) {
+    let rst;
 
-    for (const config of configs) {
-        const norm_dots = await get_single_masked_dots(
-            layers[config["layer_index"]],
-            config["dots_path"],
-            dots_size,
-            lb,
-            rb
+    if (!configs.length || whole) {
+        const dots_path = configs.length ? configs[0]["dots_path"] : get_dots_path();
+
+        rst = await get_whole_layer_masked_dots(
+            layers[0],
+            dots_path,
+            dot_size,
+            lb = lb,
+            rb = rb
         );
-        cv.add(rst, norm_dots, rst);
-        norm_dots.delete();
-    }
+    } else {
+        rst = new cv.Mat.zeros(
+            layers[0].rows,
+            layers[0].cols,
+            cv.CV_32FC4,
+        );
 
-    cv.divide(
-        rst,
-        new cv.Mat(
-            rst.rows,
-            rst.cols,
-            rst.type(),
-            [configs.length, configs.length, configs.length, configs.length]
-        ),
-        rst);
+        for (const config of configs) {
+            const norm_dots = await get_single_masked_dots(
+                layers[config["layer_index"]],
+                config["dots_path"],
+                num_levels,
+                lb = lb,
+                rb = rb
+            );
+            cv.add(rst, norm_dots, rst);
+            norm_dots.delete();
+        }
+
+        cv.divide(
+            rst,
+            new cv.Mat(
+                rst.rows,
+                rst.cols,
+                rst.type(),
+                [configs.length, configs.length, configs.length, configs.length]
+            ),
+            rst);
+    }
 
     cv.imshow("multi-dot-layer-canvas", rst);
 
@@ -272,7 +340,7 @@ async function get_masked_dots(layers, configs, dots_size, lb = 0, rb = 1) {
 
 function merge(dots, layers, dot_color) {
     let is_first = false;
-    let result = new cv.Mat();
+    let result;
 
     layers.forEach(layer => {
         const norm_layer = im2norm(layer)
@@ -329,14 +397,23 @@ function merge(dots, layers, dot_color) {
     return result;
 }
 
-async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
+async function apply_dots_on_layers(layers, configs, canvas_name, whole = false) {
 
-    const dots_size = 1 + get_dots_size();
-    const dot_color1 = get_dots_color();
-    const lb = 0;
-    const rb = 1;
-    const norm_dots = await get_masked_dots(layers, configs, dots_size, lb, rb);
-    const rgba_img = merge(norm_dots, layers, dot_color1);
+    let dot_size = get_dot_size();
+    let dot_color = get_dot_color();
+    let num_levels = get_num_levels();
+    let lb = 0;
+    let rb = 1;
+    const norm_dots = await get_masked_dots(
+        layers,
+        configs,
+        dot_size,
+        num_levels,
+        whole = whole,
+        lb = lb,
+        rb = rb
+    );
+    const rgba_img = merge(norm_dots, layers, dot_color);
 
     /* important: one final OpenCV dance before we can display everything
      * right now the alpha layer has all sorts of garbage data, which, 
@@ -355,12 +432,12 @@ async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
     rgba_img.delete();
 }
 
-function get_dots_size() {
+function get_dot_size() {
     const strength = document.getElementById("dot-strength-text").innerText;
     return +strength;
 }
 
-function get_dots_color() {
+function get_dot_color() {
     const str = document.getElementById("dot-text").innerText;
     const match = str.match(/#(?:[0-9a-fA-F]{3}){1,2}/);
     const hex_text = match ? match[0] : null;
@@ -378,9 +455,47 @@ function get_dots_color() {
     return rst;
 }
 
+function get_dots_path() {
+    const texture_path = document.getElementById("texture-preview").src;
+    return new URL(texture_path).pathname;
+}
+
+function get_num_levels() {
+    const num_levels = document.getElementById("dot-strength-select-text").value;
+    return +num_levels;
+}
+
+function ApplyOnWholePage({ paths }) {
+    const apply_dots = async () => {
+        try {
+            const layers = await Promise.all(
+                paths.map(path => loadImageAsMat(path))
+            );
+
+
+            await apply_dots_on_layers(layers, [], "canvas", true);
+
+            layers.forEach(layer => layer.delete());
+        } catch (e) {
+            console.error(e.name, e.message, e.stack);
+        }
+    };
+
+    return (
+        <div className="apply-whole-panel" style={{ marginTop: "20px" }}>
+            <button
+                onClick={apply_dots}
+                className="default-button" id="btn-apply-whole-dots"
+                style={{ padding: "10px 20px", marginTop: "5px", width: "100%" }}
+            >
+                Apply on Whole Page!
+            </button>
+        </div>
+    );
+}
+
 function ApplyMultiDots({ paths }) {
     const [files, setFiles] = useState({}); // Tracks uploaded files
-    const dot_color = [1, 0.95, 0.9, 1];
 
     const handleFileChange = (event, path) => {
         const file = event.target.files[0];
@@ -388,7 +503,7 @@ function ApplyMultiDots({ paths }) {
         console.log(files);
     };
 
-    const apply_multi_dots = async () => {
+    const apply_dots = async () => {
         try {
             const layers = await Promise.all(
                 paths.map(path => loadImageAsMat(path))
@@ -404,7 +519,9 @@ function ApplyMultiDots({ paths }) {
                 })
             }
 
-            await apply_dots_on_layers(layers, configs, "canvas", dot_color);
+            if (configs.length) {
+                await apply_dots_on_layers(layers, configs, "canvas");
+            }
 
             layers.forEach(layer => layer.delete());
         } catch (e) {
@@ -419,17 +536,17 @@ function ApplyMultiDots({ paths }) {
                     <div className="row" key={path}>
                         <div className="row-text">{path}</div>
                         <input type="file" className="upload-button"
-                        onChange={(e) => handleFileChange(e, path)} />
+                            onChange={(e) => handleFileChange(e, path)} />
                     </div>
                 ))}
             </div>
             <div id="apply-multi-dots">
                 <button
-                    onClick={apply_multi_dots}
+                    onClick={apply_dots}
                     className="default-button" id="btn-apply-dots"
                     style={{ padding: "10px 20px", marginTop: "5px", width: "100%" }}
                 >
-                    Apply
+                    Apply Multiple Dot Patterns!
                 </button>
             </div>
         </div>
@@ -472,16 +589,17 @@ function GetLayer({ paths }) {
                     }
                 }
                 console.log(`idx=${max_index}, alpha=${max_alpha}`)
-                const texture_path = document.getElementById("texture-preview").src;
-                console.log(texture_path);
+                // const texture_path = document.getElementById("texture-preview").src;
+                // console.log(texture_path);
 
                 try {
-                    const path = new URL(texture_path).pathname;
+                    // const path = new URL(texture_path).pathname;
+                    const path = get_dots_path();
                     console.log(path);
                     const configs = [
                         { "dots_path": path, "layer_index": max_index }
                     ];
-                    await apply_dots_on_layers(layers, configs, "canvas", dot_color);
+                    await apply_dots_on_layers(layers, configs, "canvas");
                 } catch (e) {
                     console.error(e);
                 }
@@ -537,4 +655,4 @@ function GetLayer({ paths }) {
     );
 }
 
-export { GetLayer, ApplyMultiDots };
+export { GetLayer, ApplyMultiDots, ApplyOnWholePage };

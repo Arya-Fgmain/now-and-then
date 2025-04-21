@@ -5,7 +5,7 @@ import ColorPicker from "./components/colorPicker";
 import ImageUploader from "./components/simpleMultifile";
 import TextureSelector, { imageOptions, quantizationLevelOptions, QuantizationLayerSelector } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
-import { GetLayer, ApplyMultiDots } from "./components/colorLayerPicker";
+import { GetLayer, ApplyMultiDots, ApplyOnWholePage } from "./components/colorLayerPicker";
 import {
   defaultDotStrength,
   defaultXYZColoring,
@@ -150,51 +150,51 @@ const App = () => {
   }; */
 
   // setup function to resize result and preview canvas when window is resized
-/*   useEffect(() => {
-    const handleResizeCanvas = () => {
-      // resize canvas to appropriate size
-      const resultCanvas = resultCanvasRef.current;
-      const previewCanvas = previewChangeRef.current;
-
-      const resultCtx = resultCanvas.getContext("2d", {
-        willReadFrequently: true,
-      });
-      const previewCtx = resultCanvas.getContext("2d", {
-        willReadFrequently: true,
-      });
-
-      const { height, width } = resultCanvas;
-
-      const resultData = resultCtx.getImageData(0, 0, width, height);
-      const previewData = previewCtx.getImageData(0, 0, width, height);
-
-      resultCtx.clearRect(0, 0, width, height);
-      previewCtx.clearRect(0, 0, width, height);
-
-      resultCtx.putImageData(resultData, 0, 0);
-      previewCtx.putImageData(previewData, 0, 0);
-
-      const aspectRatio = height / width;
-      const displayWidth =
-        aspectRatio > 1.3 ? window.innerWidth * 0.6 : window.innerWidth * 0.4;
-      const displayHeight = displayWidth * aspectRatio;
-
-      resultCanvas.style.width = `${displayWidth}px`;
-      resultCanvas.style.height = `${displayHeight}px`;
-      previewCanvas.style.width = `${displayWidth}px`;
-      previewCanvas.style.height = `${displayHeight}px`;
-    };
-    const handleWheel = (event) => {
-      event.preventDefault();
-      const scaleAdjustment = event.deltaY * 0.005;
-      setZoomScale((prevScale) => Math.max(prevScale - scaleAdjustment, 0.1));
-    };
-
-    window.addEventListener("resize", handleResizeCanvas);
-    return () => {
-      window.removeEventListener("resize", handleResizeCanvas);
-    };
-  }, []); */
+  /*   useEffect(() => {
+      const handleResizeCanvas = () => {
+        // resize canvas to appropriate size
+        const resultCanvas = resultCanvasRef.current;
+        const previewCanvas = previewChangeRef.current;
+  
+        const resultCtx = resultCanvas.getContext("2d", {
+          willReadFrequently: true,
+        });
+        const previewCtx = resultCanvas.getContext("2d", {
+          willReadFrequently: true,
+        });
+  
+        const { height, width } = resultCanvas;
+  
+        const resultData = resultCtx.getImageData(0, 0, width, height);
+        const previewData = previewCtx.getImageData(0, 0, width, height);
+  
+        resultCtx.clearRect(0, 0, width, height);
+        previewCtx.clearRect(0, 0, width, height);
+  
+        resultCtx.putImageData(resultData, 0, 0);
+        previewCtx.putImageData(previewData, 0, 0);
+  
+        const aspectRatio = height / width;
+        const displayWidth =
+          aspectRatio > 1.3 ? window.innerWidth * 0.6 : window.innerWidth * 0.4;
+        const displayHeight = displayWidth * aspectRatio;
+  
+        resultCanvas.style.width = `${displayWidth}px`;
+        resultCanvas.style.height = `${displayHeight}px`;
+        previewCanvas.style.width = `${displayWidth}px`;
+        previewCanvas.style.height = `${displayHeight}px`;
+      };
+      const handleWheel = (event) => {
+        event.preventDefault();
+        const scaleAdjustment = event.deltaY * 0.005;
+        setZoomScale((prevScale) => Math.max(prevScale - scaleAdjustment, 0.1));
+      };
+  
+      window.addEventListener("resize", handleResizeCanvas);
+      return () => {
+        window.removeEventListener("resize", handleResizeCanvas);
+      };
+    }, []); */
 
   return (
     <div className="container">
@@ -218,7 +218,7 @@ const App = () => {
 
         <div className="control-panel">
           <Collapsible
-            setSliderValues={()=>{}}
+            setSliderValues={() => { }}
             title="Upload Files"
             openTool={openTool}
             setOpenTool={setOpenTool}>
@@ -229,7 +229,7 @@ const App = () => {
           </Collapsible>
 
           {<Collapsible
-            setSliderValues={()=>{}}
+            setSliderValues={() => { }}
             title="Texture Options"
             openTool={openTool}
             setOpenTool={setOpenTool}
@@ -242,7 +242,7 @@ const App = () => {
           </Collapsible>}
 
           {<Collapsible
-            setSliderValues={()=>{}}
+            setSliderValues={() => { }}
             title="Dot Color"
             openTool={openTool}
             setOpenTool={setOpenTool}
@@ -278,18 +278,19 @@ const App = () => {
           </Collapsible>
 
           {<Collapsible
-            setSliderValues={()=>{}}
+            setSliderValues={() => { }}
             title="Quantization Layers"
             openTool={openTool}
             setOpenTool={setOpenTool}
           >
-            
+
             {<QuantizationLayerSelector
               quantizationLayerCount={quantizationLayerCount}
               setQuantizationLayerCount={setQuantizationLayerCount}
             />}
           </Collapsible>}
 
+          <ApplyOnWholePage paths={[...imagePaths]} />
           <GetLayer paths={[...imagePaths]} />
           <ApplyMultiDots paths={[...imagePaths]} />
 
