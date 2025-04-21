@@ -1,5 +1,4 @@
 downloads/*
 venv/*
 data/
-*.png
 *.jpg
