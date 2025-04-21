@@ -237,29 +237,6 @@ const App = () => {
           </Collapsible>}
 
           {<Collapsible
-            title="Quantization Layers"
-            openTool={openTool}
-            setOpenTool={setOpenTool}
-          >
-            
-            {<QuantizationLayerSelector
-              quantizationLayerCount={quantizationLayerCount}
-              setQuantizationLayerCount={setQuantizationLayerCount}
-            />}
-          </Collapsible>}
-          
-          {<Collapsible
-            title="Layer Count"
-            openTool={openTool}
-            setOpenTool={setOpenTool}
-          >
-            {<TextureSelector
-              texture={texture}
-              setTexture={setTexture}
-            />}
-          </Collapsible>}
-
-          {<Collapsible
             title="Dot Color"
             openTool={openTool}
             setOpenTool={setOpenTool}
@@ -294,6 +271,21 @@ const App = () => {
             <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
 
+          {<Collapsible
+            title="Quantization Layers"
+            openTool={openTool}
+            setOpenTool={setOpenTool}
+          >
+            
+            {<QuantizationLayerSelector
+              quantizationLayerCount={quantizationLayerCount}
+              setQuantizationLayerCount={setQuantizationLayerCount}
+            />}
+          </Collapsible>}
+
+          <GetLayer paths={[...imagePaths]} />
+          <ApplyMultiDots paths={[...imagePaths]} />
+
           <button
             //onClick={downloadImage}
             className="default-button"
@@ -301,11 +293,6 @@ const App = () => {
           >
             Download Result Image
           </button>
-
-          <GetLayer paths={[...imagePaths]} />
-          <ApplyMultiDots paths={[...imagePaths]} />
-
-
         </div>
       </div>
     </div >
