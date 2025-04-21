@@ -206,7 +206,18 @@ function OpenCVView({ imagePaths, dotStrength }) {
     };
 
     processImages();
-  }, [imagePaths, dotStrength]);
+    // }, [imagePaths, dotStrength]);
+  }, []);
+
+  // try {
+  //   if (is_first) {
+  //     processImages();
+  //     is_first = false;
+  //   }
+
+  // } catch (e) {
+  //   console.error(e.message, e.stack);
+  // }
 
   return (
     <div>

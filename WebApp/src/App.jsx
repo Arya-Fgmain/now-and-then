@@ -241,6 +241,7 @@ const App = () => {
             <ColorPicker
               color={dotsColor}
               setColor={setDotsColor}
+              id="dot"
             />
 
           </Collapsible>}
@@ -263,7 +264,7 @@ const App = () => {
               setAdditionalFilesSliders={setAdditionalFilesSliders}
               resetAdditionalSliders={resetAdditionalSliders}
             />
-            <p>{dotStrength.Settings["Dot Size"]}</p>
+            <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
 
           <button
