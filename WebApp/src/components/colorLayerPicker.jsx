@@ -321,8 +321,9 @@ function merge(dots, layers, dot_color) {
     return result;
 }
 
-// async function apply_dots_on_layers(layers, index, dots_path) {
 async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
+    get_dot_strength();
+    get_dot_color();
     const norm_dots = await get_masked_dots(layers, configs);
     const rgba_img = merge(norm_dots, layers, dot_color);
 
@@ -340,6 +341,32 @@ async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
 
     norm_dots.delete();
     rgb_img.delete();
+    rgba_img.delete();
+}
+
+function get_dot_strength() {
+    const strength = document.getElementById("dot-strength-text").innerText;
+    return +strength;
+}
+
+function get_dot_color() {
+    const dot_color_text = document.getElementById("dot-text").innerText;
+    const hex = dot_color_text.replace(/^#/, '');
+
+    console.log(dot_color_text);
+
+    // Parse r, g, b from hex
+    const bigint = parseInt(hex, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+
+    // Normalize to 0-1 range
+    console.log(r, g, b);
+    const rst = [r / 255, g / 255, b / 255, 1];
+    console.log(rst, typeof (rst));
+
+    return rst;
 }
 
 function ApplyMultiDots({ paths }) {
