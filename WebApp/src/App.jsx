@@ -263,6 +263,7 @@ const App = () => {
               additionalFilesSliders={additionalFilesSliders}
               setAdditionalFilesSliders={setAdditionalFilesSliders}
               resetAdditionalSliders={resetAdditionalSliders}
+              applyEdit={()=>{}}
             />
             <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
