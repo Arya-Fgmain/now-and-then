@@ -416,11 +416,10 @@ function ApplyMultiDots({ paths }) {
         <div className="apply-panel" style={{ marginTop: "20px" }}>
             <div className="panel-header">
                 {paths.map((path, index) => (
-                    <div className="row">
-                        {/* <div className="color-cube" style={{ backgroundColor: "red" }}></div> */}
-                        <div className="row-text">layer_{index}</div>
+                    <div className="row" key={path}>
+                        <div className="row-text">{path}</div>
                         <input type="file" className="upload-button"
-                            onChange={(e) => handleFileChange(e, path)} />
+                        onChange={(e) => handleFileChange(e, path)} />
                     </div>
                 ))}
             </div>

@@ -145,9 +145,9 @@ const App = () => {
   */
 
 
-  const resetCanvas = () => {
+/*   const resetCanvas = () => {
     copyCanvasData(resultCanvasRef, previewChangeRef);
-  };
+  }; */
 
   // setup function to resize result and preview canvas when window is resized
 /*   useEffect(() => {
