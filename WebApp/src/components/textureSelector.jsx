@@ -2,20 +2,20 @@ import React from 'react';
 
 // Export the options so other files can import them too
 export const imageOptions = [
-  { name: '1930s', url: '/sample_30s.png' },
-  { name: '1940s', url: '/sample_40s.png' },
-  { name: '1970s', url: '/sample_70s.png' },
-  { name: '1990s (1)', url: '/sample_90s.png' },
-  { name: '1990s (2)', url: '/sample_lobo.png' },
-  { name: '1990s (3)', url: '/sample_ds1.png' },
-  { name: '1990s (4)', url: '/sample_ds2.png' },
-  { name: '1990s (5)', url: '/sample_ds3.png' },
-  { name: 'pure dots 1', url: '/sample_fixpat1.png' },
-  { name: 'pure dots 2', url: '/sample_fixpat2.png' },
-  { name: 'high dpi', url: '/sample_highdpi.png' },
-  { name: 'low dpi', url: '/sample_lowdpi.png' },
+  // { name: '1930s', url: '/sample_30s.png' },
+  // { name: '1940s', url: '/sample_40s.png' },
+  // { name: '1970s', url: '/sample_70s.png' },
+  // { name: '1990s (1)', url: '/sample_90s.png' },
+  // { name: '1990s (2)', url: '/sample_lobo.png' },
+  // { name: '1990s (3)', url: '/sample_ds1.png' },
+  // { name: '1990s (4)', url: '/sample_ds2.png' },
+  // { name: '1990s (5)', url: '/sample_ds3.png' },
+  // { name: 'pure dots 1', url: '/sample_fixpat1.png' },
+  // { name: 'pure dots 2', url: '/sample_fixpat2.png' },
+  // { name: 'high dpi', url: '/sample_highdpi.png' },
+  // { name: 'low dpi', url: '/sample_lowdpi.png' },
 
-  { name: 'gouache', url: '/sample_kingdom.png' },
+  // { name: 'gouache', url: '/sample_kingdom.png' },
 
   { name: '1930s', url: '/tex-4000-30s.png' },
   { name: '1940s', url: '/tex-4000-40s.png' },
@@ -36,7 +36,8 @@ export const quantizationLevelOptions = [
   { name: '10', number: '10' },
 ]
 
-function TextureSelector({ texture, setTexture }) {
+function TextureSelector({ texture, setTexture, paths }) {
+
   const handleChange = (e) => {
     setTexture(e.target.value); // Set the texture selected from the dropdown
   };
@@ -83,7 +84,7 @@ function QuantizationLayerSelector({ quantizationLayerCount, setQuantizationLaye
           ))}
         </select>
       </div>
-      
+
     </div>
   );
 }
