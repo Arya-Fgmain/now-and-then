@@ -197,8 +197,10 @@ const App = () => {
         {/* <h3>OpenCV Image Mixer</h3> */}
         <div className="canvas-container">
           <div className="result-canvas"><OpenCVView
-            imagePaths={[...imagePaths, texture]}
-            dotStrength={dotStrength} />
+            imagePaths={[...imagePaths, texture]} 
+            dotStrength={dotStrength}
+            dotsColor={dotsColor}/>
+            
           </div>
           <div className="preview-canvas">
             {/* <canvas id="draft-canvas" style={{ width: "100%" }} ></canvas> */}
