@@ -462,6 +462,7 @@ function get_dots_path() {
 
 function get_num_levels() {
     const num_levels = document.getElementById("dot-strength-select-text").value;
+    console.log({num_levels})
     return +num_levels;
 }
 
@@ -531,10 +532,12 @@ function ApplyMultiDots({ paths }) {
 
     return (
         <div className="apply-panel" style={{ marginTop: "20px" }}>
+
+            //////////////////////////Here make changes
             <div className="panel-header">
                 {paths.map((path, index) => (
                     <div className="row" key={path}>
-                        <div className="row-text">{path}</div>
+                        <div className="row-text">Layer {index+1}</div>
                         <input type="file" className="upload-button"
                             onChange={(e) => handleFileChange(e, path)} />
                     </div>
