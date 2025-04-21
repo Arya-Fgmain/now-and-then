@@ -89,119 +89,14 @@ const App = () => {
     });
   };
 
-  /*  const downloadImage = async () => {
-     // Redraw rgbCanvas to hi-res version
-     await drawImageOnCanvas(URL.createObjectURL(rgbFile), rgbCanvasRef, false);
-     // Display loading
-     setDisplayLoading(true);
-     // Redraw nirCanvas to hi-res version
-     await drawImageOnCanvas(URL.createObjectURL(nirFile), nirCanvasRef, false);
-     // reference: https://stackoverflow.com/questions/10179815/get-loop-counter-index-using-for-of-syntax-in-javascript
-     for (const [index, file] of additionalFiles.entries()) {
-       await drawImageOnCanvas(
-         URL.createObjectURL(file.file),
-         additionalCanvasRefs[index],
-         false
-       );
-     }
-     copyCanvasData(rgbCanvasRef, resultCanvasRef);
- 
-     // apply all edits to hi-res version
-     history.slice(0, currentHistoryIndex + 1).forEach((editItem) => {
-       applyEdit(editItem);
-     });
- 
-     // Get the canvas
-     const canvas = resultCanvasRef.current;
-     if (!canvas) return; // Return if no canvas is found
- 
-     // Create image URL
-     const imageUrl = canvas.toDataURL("image/png");
- 
-     // Create a temporary link to trigger the download
-     const downloadLink = document.createElement("a");
-     downloadLink.href = imageUrl;
-     downloadLink.download = "result-image.png"; // Set the name of the download file
- 
-     // Append to the document, trigger, and remove the link
-     document.body.appendChild(downloadLink);
-     downloadLink.click();
-     document.body.removeChild(downloadLink);
- 
-     // go back to downsampled version for further edits
-     drawImageOnCanvas(URL.createObjectURL(rgbFile), rgbCanvasRef, true);
-     drawImageOnCanvas(URL.createObjectURL(nirFile), nirCanvasRef, true);
-     additionalFiles.forEach(async (file, index) => {
-       await drawImageOnCanvas(
-         URL.createObjectURL(file.file),
-         additionalCanvasRefs[index],
-         true
-       );
-     });
-     copyCanvasData(previewChangeRef, resultCanvasRef);
-     // Hide loading
-     setDisplayLoading(false);
-   };
-  */
 
-
-/*   const resetCanvas = () => {
-    copyCanvasData(resultCanvasRef, previewChangeRef);
-  }; */
-
-  // setup function to resize result and preview canvas when window is resized
-  /*   useEffect(() => {
-      const handleResizeCanvas = () => {
-        // resize canvas to appropriate size
-        const resultCanvas = resultCanvasRef.current;
-        const previewCanvas = previewChangeRef.current;
-  
-        const resultCtx = resultCanvas.getContext("2d", {
-          willReadFrequently: true,
-        });
-        const previewCtx = resultCanvas.getContext("2d", {
-          willReadFrequently: true,
-        });
-  
-        const { height, width } = resultCanvas;
-  
-        const resultData = resultCtx.getImageData(0, 0, width, height);
-        const previewData = previewCtx.getImageData(0, 0, width, height);
-  
-        resultCtx.clearRect(0, 0, width, height);
-        previewCtx.clearRect(0, 0, width, height);
-  
-        resultCtx.putImageData(resultData, 0, 0);
-        previewCtx.putImageData(previewData, 0, 0);
-  
-        const aspectRatio = height / width;
-        const displayWidth =
-          aspectRatio > 1.3 ? window.innerWidth * 0.6 : window.innerWidth * 0.4;
-        const displayHeight = displayWidth * aspectRatio;
-  
-        resultCanvas.style.width = `${displayWidth}px`;
-        resultCanvas.style.height = `${displayHeight}px`;
-        previewCanvas.style.width = `${displayWidth}px`;
-        previewCanvas.style.height = `${displayHeight}px`;
-      };
-      const handleWheel = (event) => {
-        event.preventDefault();
-        const scaleAdjustment = event.deltaY * 0.005;
-        setZoomScale((prevScale) => Math.max(prevScale - scaleAdjustment, 0.1));
-      };
-  
-      window.addEventListener("resize", handleResizeCanvas);
-      return () => {
-        window.removeEventListener("resize", handleResizeCanvas);
-      };
-    }, []); */
 
   return (
     <div className="container">
       <div className="main-content">
         {/* <h3>OpenCV Image Mixer</h3> */}
         <div className="canvas-container">
-          <div className="result-canvas">
+          <div>
             <OpenCVView
               imagePaths={[...imagePaths, texture]}
               dotStrength={dotStrength}
@@ -227,7 +122,7 @@ const App = () => {
               imagePaths={imagePaths}
               setImagePaths={setImagePaths} />
           </Collapsible>
-
+          <hr/>
           {<Collapsible
             setSliderValues={() => { }}
             title="Texture Options"
@@ -279,7 +174,7 @@ const App = () => {
 
           {<Collapsible
             setSliderValues={() => { }}
-            title="Quantization Layers"
+            title="Quantization Levels"
             openTool={openTool}
             setOpenTool={setOpenTool}
           >
@@ -293,11 +188,12 @@ const App = () => {
           <ApplyOnWholePage paths={[...imagePaths]} />
           <GetLayer paths={[...imagePaths]} />
           <ApplyMultiDots paths={[...imagePaths]} />
-
+          
+          <hr/>
           <button
             //onClick={downloadImage}
             className="default-button"
-            style={{ padding: "10px 20px", marginTop: "20px" }}
+            style={{ padding: "10px 20px"}}
           >
             Download Result Image
           </button>

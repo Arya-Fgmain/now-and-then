@@ -21,11 +21,7 @@
   position: relative;
 }
 
-.result-canvas {
-  position: absolute;
-  transform-origin: center center;
-  display: none;
-}
+
 
 .preview-canvas {
   z-index: 10;

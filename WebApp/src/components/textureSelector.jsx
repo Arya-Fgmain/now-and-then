@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRef, useEffect } from 'react';
 
-// Export the options so other files can import them too
+// default names for texture names as well as the urls in public folder they represent
 export const imageOptions = [
   // { name: '1930s', url: '/sample_30s.png' },
   // { name: '1940s', url: '/sample_40s.png' },
@@ -24,6 +24,8 @@ export const imageOptions = [
   { name: '1990s', url: '/tex-4000-90s.png' },
 ];
 
+
+//default values for the quantization levels
 export const quantizationLevelOptions = [
   // { name: 'None', number: '0' },
   { name: '2', number: '2' },
@@ -68,6 +70,8 @@ function TextureSelector({ texture, setTexture, paths }) {
 
 export default TextureSelector;
 
+
+//creates an input for the number of quantization levels.
 function QuantizationLayerSelector({ quantizationLayerCount, setQuantizationLayerCount }) {
   useEffect(() => {
     setQuantizationLayerCount("5"); // or any logic

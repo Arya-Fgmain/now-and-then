@@ -487,11 +487,13 @@ function ApplyOnWholePage({ paths }) {
             <button
                 onClick={apply_dots}
                 className="default-button" id="btn-apply-whole-dots"
-                style={{ padding: "10px 20px", marginTop: "5px", width: "100%" }}
+                style={{ padding: "10px 20px", width: "100%" }}
             >
                 Apply on Whole Page!
             </button>
+            <hr />
         </div>
+        
     );
 }
 
@@ -542,11 +544,13 @@ function ApplyMultiDots({ paths }) {
                     </div>
                 ))}
             </div>
+            
             <div id="apply-multi-dots">
+                <hr />
                 <button
                     onClick={apply_dots}
                     className="default-button" id="btn-apply-dots"
-                    style={{ padding: "10px 20px", marginTop: "5px", width: "100%" }}
+                    style={{ padding: "10px 20px", width: "100%" }}
                 >
                     Apply Multiple Dot Patterns!
                 </button>
@@ -571,7 +575,7 @@ function GetLayer({ paths }) {
 
         isActiveSelectLayer = !isActiveSelectLayer;
         if (!isActiveSelectLayer) {
-            btn_selectLayer.innerText = 'Select';
+            btn_selectLayer.innerText = 'Select Pixel';
 
             if (hasInitialized) {
                 const layers = await Promise.all(
@@ -606,7 +610,7 @@ function GetLayer({ paths }) {
             }
             return;
         } else {
-            btn_selectLayer.innerText = 'Decide';
+            btn_selectLayer.innerText = 'Apply Quantization';
         }
 
         if (!hasInitialized) {
@@ -634,21 +638,26 @@ function GetLayer({ paths }) {
 
     return (
         <div id="layer-selector">
-            <button
-                onClick={selectLayer}
-                className="default-button" id="btn-select-layer"
-                style={{ padding: "10px 20px", marginTop: "20px", width: "30%" }}
-            >
-                Select
-            </button>
-            <span className="coord-text"
-                style={{ padding: "10px", width: "5%" }}>x:</span>
-            <input type="number" id="coordx" placeholder="X" min="0"
-                style={{ width: "20%" }} />
-            <span className="coord-text"
-                style={{ padding: "10px", width: "5%" }}>y:</span>
-            <input type="number" id="coordy" placeholder="Y" min="0"
-                style={{ width: "20%" }} />
+            <div>
+                <button
+                    onClick={selectLayer}
+                    className="default-button" id="btn-select-layer"
+                    style={{ padding: "10px 20px", width: "100%" }}
+                >
+                    Select Pixel
+                </button>
+            </div>
+            <div>
+                <span className="coord-text"
+                    style={{ padding: "10px", width: "5%" }}>x:</span>
+                <input type="number" id="coordx" placeholder="X" min="0"
+                    style={{ width: "20%" }} />
+                <span className="coord-text"
+                    style={{ padding: "10px", width: "5%" }}>y:</span>
+                <input type="number" id="coordy" placeholder="Y" min="0"
+                    style={{ width: "20%" }} />
+            </div>
+            
         </div>
     );
 }
