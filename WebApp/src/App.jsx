@@ -198,7 +198,9 @@ const App = () => {
         <div className="canvas-container">
           <div className="result-canvas"><OpenCVView
             imagePaths={[...imagePaths, texture]} 
-            dotStrength={dotStrength}/>
+            dotStrength={dotStrength}
+            dotsColor={dotsColor}/>
+            
           </div>
           <div className="preview-canvas">
             <canvas id="dot-layer-canvas" style={{ width: "100%" }} ></canvas>
