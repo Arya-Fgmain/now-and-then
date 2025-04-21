@@ -9,7 +9,7 @@ function OpenCVView({ imagePaths, dotStrength }) {
     if (!window.cv || !imagePaths || imagePaths.length < 2) return;
 
     const canvas = canvasRef.current;
-    const scale = 0.6;
+    const scale = 1;
 
     const loadImageAsMat = (srcPath) => {
       return new Promise((resolve) => {
@@ -77,13 +77,11 @@ function OpenCVView({ imagePaths, dotStrength }) {
       dotsF = dil;
 
       // check for dot size modification from the user
-      if (dot_strength > 5)
-      {
+      if (dot_strength > 5) {
         dotsF = dil;
         erd.delete();
       }
-      else if (dot_strength < 5)
-      {
+      else if (dot_strength < 5) {
         dotsF = erd;
         dil.delete();
       }

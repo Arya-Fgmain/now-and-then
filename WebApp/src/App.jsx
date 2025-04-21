@@ -203,7 +203,7 @@ const App = () => {
             
           </div>
           <div className="preview-canvas">
-            <canvas id="dot-layer-canvas" style={{ width: "100%" }} ></canvas>
+            {/* <canvas id="draft-canvas" style={{ width: "100%" }} ></canvas> */}
             <canvas id="multi-dot-layer-canvas" style={{ width: "100%" }} ></canvas>
           </div>
 
@@ -288,6 +288,8 @@ const App = () => {
 
           <GetLayer paths={[...imagePaths]} />
           <ApplyMultiDots paths={[...imagePaths]} />
+
+
         </div>
       </div>
     </div >

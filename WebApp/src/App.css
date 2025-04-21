@@ -62,3 +62,25 @@
   padding: 10px 20px;
   margin-top: 20px;
 }
+
+.row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.color-cube {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.row-text {
+  flex-grow: 1;
+  width: "100px";
+  margin-right: 10px;
+  flex-shrink: 0;
+}
