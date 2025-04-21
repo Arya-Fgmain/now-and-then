@@ -1,7 +1,23 @@
 import { useRef, useEffect } from 'react';
 
-function OpenCVView({ imagePaths, dotStrength }) {
+function get_dots_color(color) {
+  const hex = color.replace(/^#/, '');
+
+  // Parse r, g, b from hex
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+
+  // Normalize to 0-1 range
+  const rst = [r / 255, g / 255, b / 255, 1];
+
+  return rst;
+}
+
+function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
   const canvasRef = useRef();
+  const dot_colors = get_dots_color(dotsColor);
 
   useEffect(() => {
     console.log("entering use effect")
@@ -45,7 +61,7 @@ function OpenCVView({ imagePaths, dotStrength }) {
       cv.imshow(canvas, layers[0].mat);
 
       let result_initialized = false;
-      let result = new cv.Mat();
+      let result;
 
       // create float version of dots for manipulations in the loop
       let dots_float = new cv.Mat();
@@ -58,6 +74,7 @@ function OpenCVView({ imagePaths, dotStrength }) {
 
       // scale the dot pattern to image size for easy merging
       let dotsF = new cv.Mat();
+      // let dotsF;
       let dsize = new cv.Size(layers[0].mat.cols, layers[0].mat.rows);
       cv.resize(dots_norm, dotsF, dsize, 0, 0, cv.INTER_CUBIC);
 
@@ -74,6 +91,7 @@ function OpenCVView({ imagePaths, dotStrength }) {
       cv.dilate(dotsF, dil, kern);
       kern.delete();
 
+      dotsF.delete();
       dotsF = dil;
 
       // check for dot size modification from the user
@@ -86,6 +104,9 @@ function OpenCVView({ imagePaths, dotStrength }) {
         dil.delete();
       }
 
+      dots.mat.delete();
+      dots_float.delete();
+      dots_norm.delete();
 
       for (let i = 0; i < layers.length; i++) {
         const curr_layer = layers[i].mat;
@@ -129,7 +150,11 @@ function OpenCVView({ imagePaths, dotStrength }) {
         /* mult & add */
 
         // foreground color (dots)
-        const dots_color = new cv.Mat(curr_layer_F.rows, curr_layer_F.cols, cv.CV_32FC4, new cv.Scalar(0.5, 0.5, 0.5, 1.0));
+        const dots_color = new cv.Mat(
+          curr_layer_F.rows,
+          curr_layer_F.cols,
+          cv.CV_32FC4,
+          dot_colors);
         const colors_fg = new cv.Mat();
         cv.multiply(dots_color, gamma_2, colors_fg);
 
@@ -154,11 +179,11 @@ function OpenCVView({ imagePaths, dotStrength }) {
           cv.add(result, sum, result);
         }
 
-        // free memory (good ol' C++ <3)
+        // // free memory (good ol' C++ <3)
         curr_layer_float.delete();
         curr_layer_F.delete();
         curr_layer_split.delete();
-        // layer_weighted.delete();
+        // // layer_weighted.delete();
         curr_alpha.delete();
         alpha_vec.delete();
         alpha_mult.delete();
@@ -170,9 +195,13 @@ function OpenCVView({ imagePaths, dotStrength }) {
         sum.delete();
       }
 
+      layers.forEach(layer => layer.mat.delete());
+      dotsF.delete();
+
       // Remove alpha (keep only RGB)
       const allChannels = new cv.MatVector();
       cv.split(result, allChannels);
+      result.delete();
 
       // manually keep only first 3
       const rgbVec = new cv.MatVector();
@@ -183,41 +212,32 @@ function OpenCVView({ imagePaths, dotStrength }) {
       // merge into final RGB result
       const rgbOnly = new cv.Mat();
       cv.merge(rgbVec, rgbOnly);
+      rgbVec.delete();
 
       // Normalize once at the end
       const finalDisplay = new cv.Mat();
       cv.normalize(rgbOnly, finalDisplay, 0, 255, cv.NORM_MINMAX);
+
       finalDisplay.convertTo(finalDisplay, cv.CV_8UC3);
 
       // Display it
       cv.imshow(canvas, finalDisplay);
 
       // Cleanup
-      layers.forEach(layer => layer.mat.delete());
-      dots.mat.delete();
-      dots_float.delete();
-      dots_norm.delete();
-      dotsF.delete();
+      // layers.forEach(layer => layer.mat.delete());
+      // dots.mat.delete();
+      // dots_float.delete();
+      // dots_norm.delete();
+      // dotsF.delete();
       result.delete();
-      allChannels.delete();
-      rgbVec.delete();
-      rgbOnly.delete();
-      finalDisplay.delete();
+      // allChannels.delete();
+      // rgbVec.delete();
+      // rgbOnly.delete();
+      // finalDisplay.delete();
     };
 
     processImages();
-    // }, [imagePaths, dotStrength]);
-  }, []);
-
-  // try {
-  //   if (is_first) {
-  //     processImages();
-  //     is_first = false;
-  //   }
-
-  // } catch (e) {
-  //   console.error(e.message, e.stack);
-  // }
+  }, [imagePaths, dotStrength, dotsColor]);
 
   return (
     <div>

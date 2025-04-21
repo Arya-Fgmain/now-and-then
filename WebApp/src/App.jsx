@@ -201,11 +201,13 @@ const App = () => {
       <div className="main-content">
         {/* <h3>OpenCV Image Mixer</h3> */}
         <div className="canvas-container">
-          <div className="result-canvas"><OpenCVView
-            imagePaths={[...imagePaths, texture]} 
-            dotStrength={dotStrength}
-            dotsColor={dotsColor}/>
-            
+          <div className="result-canvas">
+            <OpenCVView
+              imagePaths={[...imagePaths, texture]}
+              dotStrength={dotStrength}
+              dotsColor={dotsColor}
+            />
+
           </div>
           <div className="preview-canvas">
             {/* <canvas id="draft-canvas" style={{ width: "100%" }} ></canvas> */}
@@ -235,6 +237,7 @@ const App = () => {
             {<TextureSelector
               texture={texture}
               setTexture={setTexture}
+              paths={imagePaths}
             />}
           </Collapsible>}
 
@@ -269,7 +272,7 @@ const App = () => {
               additionalFilesSliders={additionalFilesSliders}
               setAdditionalFilesSliders={setAdditionalFilesSliders}
               resetAdditionalSliders={resetAdditionalSliders}
-              applyEdit={()=>{}}
+              applyEdit={() => { }}
             />
             <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
