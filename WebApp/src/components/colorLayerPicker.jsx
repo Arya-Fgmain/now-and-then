@@ -247,12 +247,22 @@ async function get_masked_dots(layers, configs) {
         norm_dots.delete();
     }
 
+    cv.divide(
+        rst,
+        new cv.Mat(
+            rst.rows,
+            rst.cols,
+            rst.type(),
+            [configs.length, configs.length, configs.length, configs.length]
+        ),
+        rst);
+
     cv.imshow("multi-dot-layer-canvas", rst);
 
     return rst;
 }
 
-function merge(dots, layers) {
+function merge(dots, layers, dot_color) {
     let is_first = false;
     let result = new cv.Mat();
 
@@ -275,7 +285,7 @@ function merge(dots, layers) {
             norm_layer.rows,
             norm_layer.cols,
             cv.CV_32FC4,
-            [0.5, 0.5, 0.5, 1]
+            dot_color
         );
         const colors_fg = new cv.Mat();
         cv.multiply(dots_color, gamma_2, colors_fg);
@@ -312,9 +322,9 @@ function merge(dots, layers) {
 }
 
 // async function apply_dots_on_layers(layers, index, dots_path) {
-async function apply_dots_on_layers(layers, configs, canvas_name) {
+async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
     const norm_dots = await get_masked_dots(layers, configs);
-    const rgba_img = merge(norm_dots, layers);
+    const rgba_img = merge(norm_dots, layers, dot_color);
 
     /* important: one final OpenCV dance before we can display everything
      * right now the alpha layer has all sorts of garbage data, which, 
@@ -334,6 +344,7 @@ async function apply_dots_on_layers(layers, configs, canvas_name) {
 
 function ApplyMultiDots({ paths }) {
     const [files, setFiles] = useState({}); // Tracks uploaded files
+    const dot_color = [1, 0.95, 0.9, 1];
 
     const handleFileChange = (event, path) => {
         const file = event.target.files[0];
@@ -357,12 +368,7 @@ function ApplyMultiDots({ paths }) {
                 })
             }
 
-            // const configs = [
-            //     { "dots_path": "/tex-4000-1.png", "layer_index": 0 },
-            //     { "dots_path": "/tex-4000-2.png", "layer_index": 2 },
-            //     { "dots_path": "/tex-4000-3.png", "layer_index": 4 }
-            // ];
-            await apply_dots_on_layers(layers, configs, "canvas");
+            await apply_dots_on_layers(layers, configs, "canvas", dot_color);
 
             layers.forEach(layer => layer.delete());
         } catch (e) {
@@ -375,7 +381,7 @@ function ApplyMultiDots({ paths }) {
             <div className="panel-header">
                 {paths.map((path, index) => (
                     <div className="row">
-                        <div className="color-cube" style={{ backgroundColor: "red" }}></div>
+                        {/* <div className="color-cube" style={{ backgroundColor: "red" }}></div> */}
                         <div className="row-text">{path}</div>
                         <input type="file" className="upload-button"
                             onChange={(e) => handleFileChange(e, path)} />
@@ -398,6 +404,7 @@ function ApplyMultiDots({ paths }) {
 function GetLayer({ paths }) {
     let isActiveSelectLayer = false;
     let hasInitialized = false;
+    const dot_color = [0.5, 0.5, 0.5, 1];
 
     const selectLayer = async () => {
         const canvas = document.getElementById('canvas');
@@ -435,7 +442,7 @@ function GetLayer({ paths }) {
                     const configs = [
                         { "dots_path": "/tex-4000.png", "layer_index": max_index }
                     ];
-                    await apply_dots_on_layers(layers, configs, "canvas");
+                    await apply_dots_on_layers(layers, configs, "canvas", dot_color);
                 } catch (e) {
                     console.error(e);
                 }
