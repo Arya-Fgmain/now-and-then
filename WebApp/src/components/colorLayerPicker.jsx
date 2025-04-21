@@ -138,7 +138,7 @@ function build_masks(src, levels) {
 }
 
 function dots_init(layer, dots, lb = 0, rb = 1) {
-    console.log(lb, rb);
+    //console.log(lb, rb);
     const norm_dots = im2norm(dots, lb, rb);
     const pruned_dots = new cv.Mat();
     const layer_size = new cv.Size(layer.cols, layer.rows);
@@ -533,7 +533,6 @@ function ApplyMultiDots({ paths }) {
     return (
         <div className="apply-panel" style={{ marginTop: "20px" }}>
 
-            //////////////////////////Here make changes
             <div className="panel-header">
                 {paths.map((path, index) => (
                     <div className="row" key={path}>
@@ -580,7 +579,6 @@ function GetLayer({ paths }) {
                 );
                 const _x = +coordx.value;
                 const _y = +coordy.value;
-                // console.log(layers[2].ucharPtr(_y, _x));
 
                 let max_alpha = 0;
                 let max_index = 0;
@@ -592,13 +590,10 @@ function GetLayer({ paths }) {
                     }
                 }
                 console.log(`idx=${max_index}, alpha=${max_alpha}`)
-                // const texture_path = document.getElementById("texture-preview").src;
-                // console.log(texture_path);
 
                 try {
                     // const path = new URL(texture_path).pathname;
                     const path = get_dots_path();
-                    console.log(path);
                     const configs = [
                         { "dots_path": path, "layer_index": max_index }
                     ];
@@ -628,7 +623,7 @@ function GetLayer({ paths }) {
                     x = Math.floor(x / scale);
                     y = Math.floor(y / scale);
 
-                    console.log(`Mouse position: (y=${y}, x=${x})`);
+                    //console.log(`Mouse position: (y=${y}, x=${x})`);
 
                     if (coordx) { coordx.value = `${x}`; }
                     if (coordy) { coordy.value = `${y}`; }
