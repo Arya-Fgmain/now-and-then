@@ -99,7 +99,7 @@ function layer_init(layer) {
             [5, 5, 5, 0]),
         rst);
     rst.convertTo(rst, cv.CV_8U);
-    rst.convertTo(rst, cv.CV_32F, 1 / 5.0);
+    rst.convertTo(rst, cv.CV_32F, 1 / 5);
 
     norm_layer.delete();
     alpha_channel.delete();
@@ -208,8 +208,12 @@ function apply_dots_on_masks(dot_strength, masks) {
     return rst;
 }
 
-async function get_single_masked_dots(layer, dots_path) {
+async function get_single_masked_dots(layer, dots_path, dots_size) {
     const quantized = layer_init(layer);
+    // const levels = Array.from({
+    //     length: num_dots_strength
+    // }, (_, i) => i / (num_dots_strength - 1)).slice(1);
+    // console.log(levels);
     const masks = build_masks(quantized, [0.2, 0.4, 0.6, 0.8, 1]);
     const dots = await loadImageAsMat(dots_path);
     const crop_dots = dots_init(layer, dots);
@@ -231,7 +235,7 @@ async function get_single_masked_dots(layer, dots_path) {
  *   "layer_index": layer_index
  * } 
  */
-async function get_masked_dots(layers, configs) {
+async function get_masked_dots(layers, configs, dots_size) {
     let rst = new cv.Mat.zeros(
         layers[0].rows,
         layers[0].cols,
@@ -241,7 +245,8 @@ async function get_masked_dots(layers, configs) {
     for (const config of configs) {
         const norm_dots = await get_single_masked_dots(
             layers[config["layer_index"]],
-            config["dots_path"]
+            config["dots_path"],
+            dots_size
         );
         cv.add(rst, norm_dots, rst);
         norm_dots.delete();
@@ -322,10 +327,11 @@ function merge(dots, layers, dot_color) {
 }
 
 async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
-    get_dot_strength();
-    get_dot_color();
-    const norm_dots = await get_masked_dots(layers, configs);
-    const rgba_img = merge(norm_dots, layers, dot_color);
+
+    const dots_size = 1 + get_dots_size();
+    const dot_color1 = get_dots_color();
+    const norm_dots = await get_masked_dots(layers, configs, dots_size);
+    const rgba_img = merge(norm_dots, layers, dot_color1);
 
     /* important: one final OpenCV dance before we can display everything
      * right now the alpha layer has all sorts of garbage data, which, 
@@ -344,16 +350,16 @@ async function apply_dots_on_layers(layers, configs, canvas_name, dot_color) {
     rgba_img.delete();
 }
 
-function get_dot_strength() {
+function get_dots_size() {
     const strength = document.getElementById("dot-strength-text").innerText;
     return +strength;
 }
 
-function get_dot_color() {
-    const dot_color_text = document.getElementById("dot-text").innerText;
-    const hex = dot_color_text.replace(/^#/, '');
-
-    console.log(dot_color_text);
+function get_dots_color() {
+    const str = document.getElementById("dot-text").innerText;
+    const match = str.match(/#(?:[0-9a-fA-F]{3}){1,2}/);
+    const hex_text = match ? match[0] : null;
+    const hex = hex_text.replace(/^#/, '');
 
     // Parse r, g, b from hex
     const bigint = parseInt(hex, 16);
@@ -362,9 +368,7 @@ function get_dot_color() {
     const b = bigint & 255;
 
     // Normalize to 0-1 range
-    console.log(r, g, b);
     const rst = [r / 255, g / 255, b / 255, 1];
-    console.log(rst, typeof (rst));
 
     return rst;
 }
