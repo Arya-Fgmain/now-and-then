@@ -3,25 +3,24 @@ import { useRef, useEffect } from 'react';
 
 // default names for texture names as well as the urls in public folder they represent
 export const imageOptions = [
-  // { name: '1930s', url: '/sample_30s.png' },
-  // { name: '1940s', url: '/sample_40s.png' },
-  // { name: '1970s', url: '/sample_70s.png' },
-  // { name: '1990s (1)', url: '/sample_90s.png' },
-  // { name: '1990s (2)', url: '/sample_lobo.png' },
-  // { name: '1990s (3)', url: '/sample_ds1.png' },
-  // { name: '1990s (4)', url: '/sample_ds2.png' },
-  // { name: '1990s (5)', url: '/sample_ds3.png' },
-  // { name: 'pure dots 1', url: '/sample_fixpat1.png' },
-  // { name: 'pure dots 2', url: '/sample_fixpat2.png' },
-  // { name: 'high dpi', url: '/sample_highdpi.png' },
-  // { name: 'low dpi', url: '/sample_lowdpi.png' },
+  { name: '1930s', url: '/sample_30s.png' },
+  { name: '1940s', url: '/sample_40s.png' },
+  { name: '1970s', url: '/sample_70s.png' },
+  { name: '1990s (1)', url: '/sample_90s.png' },
+  { name: '1990s (2)', url: '/sample_lobo.png' },
+  { name: '1990s (3)', url: '/sample_ds1.png' },
+  { name: '1990s (4)', url: '/sample_ds2.png' },
+  { name: '1990s (5)', url: '/sample_ds3.png' },
+  { name: 'pure dots 1', url: '/sample_fixpat1.png' },
+  { name: 'pure dots 2', url: '/sample_fixpat2.png' },
+  { name: 'high dpi', url: '/sample_highdpi.png' },
+  { name: 'low dpi', url: '/sample_lowdpi.png' },
+  { name: 'gouache', url: '/sample_kingdom.png' },
 
-  // { name: 'gouache', url: '/sample_kingdom.png' },
-
-  { name: '1930s', url: '/tex-4000-30s.png' },
-  { name: '1940s', url: '/tex-4000-40s.png' },
-  { name: '1970s', url: '/tex-4000-70s.png' },
-  { name: '1990s', url: '/tex-4000-90s.png' },
+  // { name: '1930s', url: '/tex-4000-30s.png' },
+  // { name: '1940s', url: '/tex-4000-40s.png' },
+  // { name: '1970s', url: '/tex-4000-70s.png' },
+  // { name: '1990s', url: '/tex-4000-90s.png' },
 ];
 
 
