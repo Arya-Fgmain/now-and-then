@@ -118,7 +118,7 @@ const App = () => {
               resetAdditionalSliders={() => { }}
               applyEdit={() => { }}
             />
-            {/* <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p> */}
+            <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p>
           </Collapsible>
 
           <ApplyOnWholePage paths={[...imagePaths]} />
