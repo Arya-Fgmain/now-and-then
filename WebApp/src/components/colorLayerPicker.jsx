@@ -9,6 +9,28 @@
 
 import React, { useState } from 'react';
 
+
+export const imageOptions = [
+    { name: '1930s', url: '/sample_30s.png' },
+    { name: '1940s', url: '/sample_40s.png' },
+    { name: '1970s', url: '/sample_70s.png' },
+    { name: '1990s (1)', url: '/sample_90s.png' },
+    { name: '1990s (2)', url: '/sample_lobo.png' },
+    { name: '1990s (3)', url: '/sample_ds1.png' },
+    { name: '1990s (4)', url: '/sample_ds2.png' },
+    { name: '1990s (5)', url: '/sample_ds3.png' },
+    { name: 'pure dots 1', url: '/sample_fixpat1.png' },
+    { name: 'pure dots 2', url: '/sample_fixpat2.png' },
+    { name: 'high dpi', url: '/sample_highdpi.png' },
+    { name: 'low dpi', url: '/sample_lowdpi.png' },
+    { name: 'gouache', url: '/sample_kingdom.png' },
+
+    // { name: '1930s', url: '/tex-4000-30s.png' },
+    // { name: '1940s', url: '/tex-4000-40s.png' },
+    // { name: '1970s', url: '/tex-4000-70s.png' },
+    // { name: '1990s', url: '/tex-4000-90s.png' },
+];
+
 function is_equal(a, b) {
     if (a == b) return true;
     if (!a || !b) return false;
@@ -349,8 +371,7 @@ async function get_masked_dots(
     return rst;
 }
 
-function alpha_add(layers)
-{
+function alpha_add(layers) {
     let is_first = false;
     let result;
 
@@ -540,9 +561,8 @@ function ApplyMultiDots({ paths }) {
     const [files, setFiles] = useState({}); // Tracks uploaded files
 
     const handleFileChange = (event, path) => {
-        const file = event.target.files[0];
+        const file = event.target.value;
         setFiles(prev => ({ ...prev, [path]: file }));
-        console.log(files);
     };
 
     const apply_dots = async () => {
@@ -578,8 +598,13 @@ function ApplyMultiDots({ paths }) {
                 {paths.map((path, index) => (
                     <div className="row" key={path}>
                         <div className="row-text">Layer {index + 1}</div>
-                        <input type="file" className="upload-button"
-                            onChange={(e) => handleFileChange(e, path)} />
+                        <select onChange={(e) => handleFileChange(e, path)}>
+                            {imageOptions.map((img, index) => (
+                                <option key={index} value={img.url}>
+                                    {img.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 ))}
             </div>
@@ -664,7 +689,6 @@ function GetLayer({ paths }) {
 
                 previous_paths = paths;
             }
-
         }
 
         if (!hasInitialized) {
