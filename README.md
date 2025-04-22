@@ -24,7 +24,7 @@ npm run dev
 After you segment the input image into layers, you can upload the layers to the interface by clicking the `select files` in the `Upload Files` panel. Please make sure that all layers are uploaded at once, otherwise it is possible to generate weird images.
 
 ### Global settings
-We support 4 settings affecting the final output. First, we provide a set of textures collected from different decades and various styles. You can select it based on your preference.
+We support 4 settings affecting the final output. First, we provide a set of textures collected from different decades and various styles. You can select it based on your preference. We also  provide more textures. You can download form [here](https://1sfu-my.sharepoint.com/:u:/g/personal/mfa90_sfu_ca/Ef1_v2XRZH5IlagXNWI2zIABjs8mEOQF4-PkIOcx-Y3HDQ?e=Bg7oey) and put it in the `/public` folder.
 
 Second, we provide a color picker to help you select the dot color, and the interface uses this color as the dot color to render the final output.
 
