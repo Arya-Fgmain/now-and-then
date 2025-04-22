@@ -76,3 +76,7 @@ You can also use some other files to store your input without changing the given
 4. Modify the variable values within `inference.ipynb`: `csv_path=comics.csv`.
 5. Also remember if your input comic pages are not in the `dataset/test/` directory, then you also need to modify the value of variable `img_path`.
 6. After that, directly run the code, and it should work.
+
+
+## UI Credit
+Basis for the UI comes from Samuel Antunes at https://github.com/samuel-antunes/RGB-NiR-Webapp
