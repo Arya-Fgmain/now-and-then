@@ -17,10 +17,10 @@ export const imageOptions = [
   { name: 'low dpi', url: '/sample_lowdpi.png' },
   { name: 'gouache', url: '/sample_kingdom.png' },
 
-  // { name: '1930s', url: '/tex-4000-30s.png' },
-  // { name: '1940s', url: '/tex-4000-40s.png' },
-  // { name: '1970s', url: '/tex-4000-70s.png' },
-  // { name: '1990s', url: '/tex-4000-90s.png' },
+  { name: '1930s', url: '/tex-4000-30s.png' },
+  { name: '1940s', url: '/tex-4000-40s.png' },
+  { name: '1970s', url: '/tex-4000-70s.png' },
+  { name: '1990s', url: '/tex-4000-90s.png' },
 ];
 
 

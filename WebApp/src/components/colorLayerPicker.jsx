@@ -9,6 +9,17 @@
 
 import React, { useState } from 'react';
 
+function is_equal(a, b) {
+    if (a == b) return true;
+    if (!a || !b) return false;
+    if (a.length != b.length) return false;
+
+    for (let i = 0; i < a.length; ++i) {
+        if (i >= b.length || a[i] != b[i]) return false;
+    }
+    return true;
+}
+
 function get_alpha_channel(img) {
     const img_vec = new cv.MatVector();
     cv.split(img, img_vec)
@@ -492,7 +503,7 @@ function get_dots_path() {
 
 function get_num_levels() {
     const num_levels = document.getElementById("dot-strength-select-text").value;
-    console.log({num_levels})
+    console.log({ num_levels })
     return +num_levels;
 }
 
@@ -503,9 +514,7 @@ function ApplyOnWholePage({ paths }) {
                 paths.map(path => loadImageAsMat(path))
             );
 
-
             await apply_dots_on_layers(layers, [], "canvas", true);
-
             layers.forEach(layer => layer.delete());
         } catch (e) {
             console.error(e.name, e.message, e.stack);
@@ -523,7 +532,7 @@ function ApplyOnWholePage({ paths }) {
             </button>
             <hr />
         </div>
-        
+
     );
 }
 
@@ -568,13 +577,13 @@ function ApplyMultiDots({ paths }) {
             <div className="panel-header">
                 {paths.map((path, index) => (
                     <div className="row" key={path}>
-                        <div className="row-text">Layer {index+1}</div>
+                        <div className="row-text">Layer {index + 1}</div>
                         <input type="file" className="upload-button"
                             onChange={(e) => handleFileChange(e, path)} />
                     </div>
                 ))}
             </div>
-            
+
             <div id="apply-multi-dots">
                 <button
                     onClick={apply_dots}
@@ -591,7 +600,7 @@ function ApplyMultiDots({ paths }) {
 function GetLayer({ paths }) {
     let isActiveSelectLayer = false;
     let hasInitialized = false;
-    const dot_color = [0.5, 0.5, 0.5, 1];
+    let previous_paths;
 
     const selectLayer = async () => {
         const canvas = document.getElementById('canvas');
@@ -640,10 +649,27 @@ function GetLayer({ paths }) {
             return;
         } else {
             btn_selectLayer.innerText = 'Apply Quantization';
+
+            if (!previous_paths || !is_equal(previous_paths, paths)) {
+                try {
+                    const layers = await Promise.all(
+                        paths.map(path => loadImageAsMat(path))
+                    );
+
+                    await apply_dots_on_layers(layers, [], "canvas", true);
+                    layers.forEach(layer => layer.delete());
+                } catch (e) {
+                    console.error(e.name, e.message, e.stack);
+                }
+
+                previous_paths = paths;
+            }
+
         }
 
         if (!hasInitialized) {
             hasInitialized = true;
+
             canvas.addEventListener('click', function (e) {
                 if (!isActiveSelectLayer) return;
 
@@ -686,7 +712,7 @@ function GetLayer({ paths }) {
                 <input type="number" id="coordy" placeholder="Y" min="0"
                     style={{ width: "20%" }} />
             </div>
-            
+
         </div>
     );
 }

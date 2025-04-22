@@ -15,7 +15,7 @@ function get_dots_color(color) {
   return rst;
 }
 
-function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
+function OpenCVView({ imagePaths, texturePath, dotStrength, dotsColor }) {
   const canvasRef = useRef();
 
   useEffect(() => {
@@ -51,8 +51,10 @@ function OpenCVView({ imagePaths, dotStrength, dotsColor }) {
     };
 
     const processImages = async () => {
+      console.log("111");
 
-      const loadedMats = await Promise.all(imagePaths.map(path => loadImageAsMat(path)));
+      const paths = [...imagePaths, texturePath];
+      const loadedMats = await Promise.all(paths.map(path => loadImageAsMat(path)));
       const dots = loadedMats.pop(); // Last one is the dot pattern
       const layers = loadedMats;
 

@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState } from "react";
 import Collapsible from "./components/Collapsible";
 import Sliders from "./components/Sliders";
 import ColorPicker from "./components/colorPicker";
@@ -46,7 +46,8 @@ const App = () => {
         <div className="canvas-container">
           <div>
             <OpenCVView
-              imagePaths={[...imagePaths, texture]}
+              imagePaths={[...imagePaths]}
+              texturePath={texture}
               dotStrength={dotStrength}
               dotsColor={dotsColor}
             />
@@ -70,7 +71,7 @@ const App = () => {
               imagePaths={imagePaths}
               setImagePaths={setImagePaths} />
           </Collapsible>
-          <hr/>
+          <hr />
           {<Collapsible
             setSliderValues={() => { }}
             title="Texture Options"
@@ -105,7 +106,7 @@ const App = () => {
             setOpenTool={setOpenTool}
             setSliderValues={setDotStrength}
             type="DotStrength"
-            resetAdditionalSliders={()=>{}}
+            resetAdditionalSliders={() => { }}
           >
             <Sliders
               type="DotStrength"
@@ -114,7 +115,7 @@ const App = () => {
               additionalFiles={additionalFiles}
               additionalFilesSliders={additionalFilesSliders}
               setAdditionalFilesSliders={setAdditionalFilesSliders}
-              resetAdditionalSliders={()=>{}}
+              resetAdditionalSliders={() => { }}
               applyEdit={() => { }}
             />
             {/* <p id="dot-strength-text">{dotStrength.Settings["Dot Size"]}</p> */}
@@ -136,12 +137,12 @@ const App = () => {
           </div>
           <GetLayer paths={[...imagePaths]} />
           <ApplyMultiDots paths={[...imagePaths]} />
-          
-          <hr/>
+
+          <hr />
           <button
             onClick={handleDownload}
             className="default-button"
-            style={{ padding: "10px 20px"}}
+            style={{ padding: "10px 20px" }}
           >
             Download Result Image
           </button>
