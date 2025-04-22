@@ -2,7 +2,7 @@ import { useState } from "react";
 import Collapsible from "./components/Collapsible";
 import Sliders from "./components/Sliders";
 import ColorPicker from "./components/colorPicker";
-import ImageUploader from "./components/simpleMultifile";
+import ImageUploader from "./components/ImageUploader";
 import TextureSelector, { imageOptions, quantizationLevelOptions, QuantizationLayerSelector } from "./components/textureSelector";
 import OpenCVView from "./components/OpenCVView";
 import { GetLayer, ApplyMultiDots, ApplyOnWholePage, handleDownload } from "./components/colorLayerPicker";
