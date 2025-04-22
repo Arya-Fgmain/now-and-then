@@ -9,8 +9,8 @@ const Collapsible = ({
   setOpenTool,
   setSliderValues,
   type,
-  resetCanvas,
-  resetAdditionalSliders,
+  // resetCanvas,
+  // resetAdditionalSliders,
 }) => {
   // Only display if this is openTool
   const isOpen = openTool === title;
@@ -20,8 +20,8 @@ const Collapsible = ({
       // reset states
       setOpenTool("");
       setSliderValues(defaultSliders[type]);
-      resetCanvas();
-      resetAdditionalSliders();
+      // resetCanvas();
+      // resetAdditionalSliders();
     } else {
       setOpenTool(title);
     }

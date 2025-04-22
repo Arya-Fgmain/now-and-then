@@ -1,6 +1,21 @@
 import { useRef, useEffect } from 'react';
 
-function OpenCVView({ imagePaths}) {
+function get_dots_color(color) {
+  const hex = color.replace(/^#/, '');
+
+  // Parse r, g, b from hex
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+
+  // Normalize to 0-1 range
+  const rst = [r / 255, g / 255, b / 255, 1];
+
+  return rst;
+}
+
+function OpenCVView({ imagePaths, texturePath, dotStrength, dotsColor }) {
   const canvasRef = useRef();
 
   useEffect(() => {
@@ -9,7 +24,7 @@ function OpenCVView({ imagePaths}) {
     if (!window.cv || !imagePaths || imagePaths.length < 2) return;
 
     const canvas = canvasRef.current;
-    const scale = 0.6;
+    const dot_colors = get_dots_color(dotsColor);
 
     const loadImageAsMat = (srcPath) => {
       return new Promise((resolve) => {
@@ -17,41 +32,40 @@ function OpenCVView({ imagePaths}) {
         img.src = srcPath;
 
         img.onload = () => {
-          const tempCanvas = document.createElement("canvas");
-          const width = img.width * scale;
-          const height = img.height * scale;
+          // const tempCanvas = document.createElement("canvas");
+          const tempCanvas = document.getElementById("canvas");
+          const width = img.width;
+          const height = img.height;
           tempCanvas.width = width;
           tempCanvas.height = height;
           const tempCtx = tempCanvas.getContext("2d");
           tempCtx.drawImage(img, 0, 0, width, height);
 
           const mat = cv.matFromImageData(tempCtx.getImageData(0, 0, width, height));
-            // IMPORTANT this always reads 4 channels. Even if it's a single-channel grayscale, it just duplicates the channels :)
+          // IMPORTANT this always reads 4 channels.Even if it's a single-channel grayscale, it just duplicates the channels :)
           resolve({ mat, width, height });
         };
+
+        img.remove();
       });
     };
 
     const processImages = async () => {
-      const [img1, img2, img3, img4, img5, img6, img7, dots] = await Promise.all([
-        loadImageAsMat(imagePaths[0]),
-        loadImageAsMat(imagePaths[1]),
-        loadImageAsMat(imagePaths[2]),
-        loadImageAsMat(imagePaths[3]),
-        loadImageAsMat(imagePaths[4]),
-        loadImageAsMat(imagePaths[5]),
-        loadImageAsMat(imagePaths[6]),
-        loadImageAsMat(imagePaths[7]) // IMPORTANT this reads 4 channels whether or not the image actually is 4-channels or not
-      ]);
+      console.log("111");
+
+      const paths = [...imagePaths, texturePath];
+      const loadedMats = await Promise.all(paths.map(path => loadImageAsMat(path)));
+      const dots = loadedMats.pop(); // Last one is the dot pattern
+      const layers = loadedMats;
 
       // Match sizes if needed
-      canvas.width = img1.mat.cols;
-      canvas.height = img1.mat.rows;
+      canvas.width = layers[0].mat.cols;
+      canvas.height = layers[0].mat.rows;
 
-      cv.imshow(canvas, img1.mat);
+      cv.imshow(canvas, layers[0].mat);
 
       let result_initialized = false;
-      let result = new cv.Mat();
+      let result;
 
       // create float version of dots for manipulations in the loop
       let dots_float = new cv.Mat();
@@ -61,28 +75,44 @@ function OpenCVView({ imagePaths}) {
       const dots_norm = new cv.Mat();
       cv.normalize(dots_float, dots_norm, 0.0, 1.0, cv.NORM_MINMAX);
 
-      /* dilation & erosion <=> modifying dot intensity*/
-
-      // important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
-      // const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5, 5));
-      // let erd = new cv.Mat();
-      // cv.erode(dotsF, erd, kern);
-      // let dil = new cv.Mat();
-      // cv.dilate(dotsF, dil, kern);
-      // cv.imshow(canvas, dil);
-      // kern.delete();
-      // erd.delete();
-      // dil.delete();
 
       // scale the dot pattern to image size for easy merging
       let dotsF = new cv.Mat();
-      let dsize = new cv.Size(img1.mat.cols,img1.mat.rows);
+      // let dotsF;
+      let dsize = new cv.Size(layers[0].mat.cols, layers[0].mat.rows);
       cv.resize(dots_norm, dotsF, dsize, 0, 0, cv.INTER_CUBIC);
 
-      let layers = [img1, img2, img3, img4, img5, img6, img7];
+      /* dilation & erosion <=> modifying dot intensity*/
 
-      for (let i = 0; i < layers.length; i++)
-      {
+      //important: perform the operation on floating-point values in the [0-1] range otherwise results will be distorted
+
+      const dot_strength = dotStrength.Settings["Dot Size"];
+
+      const kern = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(dot_strength, dot_strength));
+      let erd = new cv.Mat();
+      cv.erode(dotsF, erd, kern);
+      let dil = new cv.Mat();
+      cv.dilate(dotsF, dil, kern);
+      kern.delete();
+
+      dotsF.delete();
+      dotsF = dil;
+
+      // check for dot size modification from the user
+      if (dot_strength > 5) {
+        dotsF = dil;
+        erd.delete();
+      }
+      else if (dot_strength < 5) {
+        dotsF = erd;
+        dil.delete();
+      }
+
+      dots.mat.delete();
+      dots_float.delete();
+      dots_norm.delete();
+
+      for (let i = 0; i < layers.length; i++) {
         const curr_layer = layers[i].mat;
 
         // convert to float first
@@ -110,7 +140,7 @@ function OpenCVView({ imagePaths}) {
         cv.merge(alpha_vec, alpha_mult);
 
         /* create gamma 1 */
-        
+
         // must modulate hf by alpha_mult
         const gamma_2 = new cv.Mat();
         cv.multiply(dotsF, alpha_mult, gamma_2);
@@ -122,9 +152,13 @@ function OpenCVView({ imagePaths}) {
         cv.subtract(alpha_mult, gamma_2, gamma_1);
 
         /* mult & add */
-        
+
         // foreground color (dots)
-        const dots_color = new cv.Mat(curr_layer_F.rows, curr_layer_F.cols, cv.CV_32FC4, new cv.Scalar(0.5, 0.5, 0.5, 1.0));
+        const dots_color = new cv.Mat(
+          curr_layer_F.rows,
+          curr_layer_F.cols,
+          cv.CV_32FC4,
+          dot_colors);
         const colors_fg = new cv.Mat();
         cv.multiply(dots_color, gamma_2, colors_fg);
 
@@ -140,21 +174,29 @@ function OpenCVView({ imagePaths}) {
         const sum = new cv.Mat();
         cv.add(colors_bg, colors_fg, sum);
 
-        // if this is the first iteration, need to initialize the 'result' output
-        if (!result_initialized)
-        {
+        // // if this is the first iteration, need to initialize the 'result' output
+        // if (!result_initialized) {
+        //   result = sum.clone();
+        //   result_initialized = true;
+        // }
+        // else {
+        //   cv.add(result, sum, result);
+        // }
+        if (!result_initialized) {
           result = sum.clone();
           result_initialized = true;
+        } else {
+          let tmp = new cv.Mat();
+          cv.add(result, sum, tmp);
+          result.delete(); // free old result
+          result = tmp;
         }
-        else {
-           cv.add(result, sum, result);
-        }
-        
-        // free memory (good ol' C++ <3)
+
+        // // free memory (good ol' C++ <3)
         curr_layer_float.delete();
         curr_layer_F.delete();
         curr_layer_split.delete();
-        // layer_weighted.delete();
+        // // layer_weighted.delete();
         curr_alpha.delete();
         alpha_vec.delete();
         alpha_mult.delete();
@@ -165,10 +207,14 @@ function OpenCVView({ imagePaths}) {
         colors_bg.delete();
         sum.delete();
       }
-      
+
+      layers.forEach(layer => layer.mat.delete());
+      dotsF.delete();
+
       // Remove alpha (keep only RGB)
       const allChannels = new cv.MatVector();
       cv.split(result, allChannels);
+      result.delete();
 
       // manually keep only first 3
       const rgbVec = new cv.MatVector();
@@ -179,41 +225,38 @@ function OpenCVView({ imagePaths}) {
       // merge into final RGB result
       const rgbOnly = new cv.Mat();
       cv.merge(rgbVec, rgbOnly);
+      rgbVec.delete();
 
       // Normalize once at the end
       const finalDisplay = new cv.Mat();
       cv.normalize(rgbOnly, finalDisplay, 0, 255, cv.NORM_MINMAX);
+      rgbOnly.delete();
+
       finalDisplay.convertTo(finalDisplay, cv.CV_8UC3);
 
       // Display it
       cv.imshow(canvas, finalDisplay);
 
       // Cleanup
-      img1.mat.delete();
-      img2.mat.delete();
-      img3.mat.delete();
-      img4.mat.delete();
-      img5.mat.delete();
-      img6.mat.delete();
-      img7.mat.delete();
-      dots.mat.delete();
-      dots_float.delete();
-      dots_norm.delete();
-      dotsF.delete();
-      result.delete();
-      allChannels.delete();
-      rgbVec.delete();
-      rgbOnly.delete();
+      // layers.forEach(layer => layer.mat.delete());
+      // dots.mat.delete();
+      // dots_float.delete();
+      // dots_norm.delete();
+      // dotsF.delete();
+      // result.delete();
+      // allChannels.delete();
+      // rgbVec.delete();
+      // rgbOnly.delete();
       finalDisplay.delete();
     };
 
     processImages();
-  }, [imagePaths]);
+    // }, [imagePaths, dotStrength, dotsColor]);
+  }, []);
 
   return (
     <div>
-      <h3>OpenCV Image Mixer</h3>
-      <canvas ref={canvasRef}></canvas>
+      <canvas id="canvas" ref={canvasRef}></canvas>
     </div>
   );
 }
@@ -221,48 +264,3 @@ function OpenCVView({ imagePaths}) {
 export default OpenCVView;
 
 
-const handleDownload = () => {
-  const canvas = canvasRef.current;
-  const image = canvas.toDataURL('image/png'); // or 'image/jpeg'
-  const link = document.createElement('a');
-  link.href = image;
-  link.download = 'result.png';
-  link.click();
-};
-
-
-
-
-
-
-
-/*
-
-      // Match sizes if needed
-      canvas.width = dots.mat.cols;
-      canvas.height = dots.mat.height;
-
-      // console.log(dots.mat.channels())
-
-      cv.imshow(canvas, dots.mat);
-
-      // scalar matrix
-      const scal = new cv.Mat(canvas.height, canvas.width, cv.CV_32FC4, new cv.Scalar(5.0, 5.0, 5.0, 1.0));
-        // IMPORTANT had to specify 32_FC4 for 4 channels
-
-      // turn dots into float
-      const dotsF = new cv.Mat(); dots.mat.convertTo(dotsF, cv.CV_32F);
-        // IMPORTANT no need to specify 4 channels because we're converting a 4-channel image
-
-      console.log(dotsF.channels());
-      console.log('also ' + scal.channels())
-
-      // scale
-      const dotsScaled = new cv.Mat();
-      cv.multiply(dotsF, scal, dotsScaled);
-
-      // turn back into int
-      const dotsSU = new cv.Mat(); dotsScaled.convertTo(dotsSU, cv.CV_8UC1);
-
-      cv.imshow(canvas, dotsSU);
-*/
