@@ -1,78 +1,42 @@
-# aging-digital-comics
-CMPT 461 Comic Book Revival Project!
+# Now N' Then Project
 
-## FSCS
+## About this project
+This application provides a library of dot patterns from old comic books and provides the functionality for a variety of dot effects. The project first uses soft color segmentation to segment the input image into layers, then we use various tools to add textures onto these layers and merge them back.
 
-### Install
+## Soft-Color Segmentation
+We consider two segmentation methods here. First [unmixed soft-color segmentation method](https://github.com/liuguoyou/color-unmixing), which decomposes the image based on solving a series of optimization problems. The second is [fast soft color segmentation](https://github.com/pfnet-research/FSCS), which relies on a neural network to segment input images. While the second is better, it loses the details of dot patterns within the alpha layer, which is highly related to the decade and printing style. Therefore, in this project, we prefer to use the first method.
 
-1. Install the virtual environment
+The SCS method is implemented based on the OpenCV library of old version, in which some features have been deprecated. We find out that it works using the OpenCV 2.7-3.5, and you can follow this [instruction](https://pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/) to install it. Then you can install the FSCS on your local machine and use it following the instructions provided by the authors.
+
+## WebApp
+We provide a web demo to help users access it. To run the demo, you first need to install the environment
 ```bash
-python -m venv venv
+cd WebApp
+npm install
 ```
-I didn't specify the version of Python, but it works with Python 3.12.
-
-2. Install packages
+The environment relies on the `nodejs` and `npm` so you need to install them first. After the installation, you can run the demo by
 ```bash
-pip install -r requirements.txt
+npm run dev
 ```
 
-After that, the FSCS should be installed successfully.
+## Functions
+### Upload input layers
+After you segment the input image into layers, you can upload the layers to the interface by clicking the `select files` in the `Upload Files` panel. Please make sure that all layers are uploaded at once, otherwise it is possible to generate weird images.
 
-### Color Segmentation
+### Global settings
+We support 4 settings affecting the final output. First, we provide a set of textures collected from different decades and various styles. You can select it based on your preference.
 
-If you only need to use the segmentation, you only need to run the file `FSCS/src/inference.ipynb`. Otherwise, you may need to check the detailed information in [FSCS](https://github.com/pfnet-research/FSCS.git). The notebook accomplishes two tasks:
+Second, we provide a color picker to help you select the dot color, and the interface uses this color as the dot color to render the final output.
 
-#### Obtain Palette
-It simply uses KMeans to generate the palette. Run the code in the last two cells.
+Third, dot strength is a variable to represent the size of dots, and a larger strength generates larger dots. The default value is set as 5.
 
-```python
-import numpy as np
-import cv2
-from sklearn.cluster import KMeans
-import pandas as pd
+Fourth, quantization levels are used to build masks for a specific layer when applying dot patterns, and it works only when you apply a specific layer or apply multiple dot patterns on different layers.
 
-### User inputs
-num_clusters = 7
-img_name = 'apple.jpg'
-img_path = '../dataset/test/' + img_name
+### Apply textures to the whole page
+To apply the dot textures onto the whole page, you can first set your configurations at first, and then click the button `Apply on Whole Page!`, which will output a combined output with applying dots on the whole image.
 
-###
+### Apply textures on the specific layer
+To apply textures on a specific layer, you can first click the button `select pixel`, which activates the function to help you select any pixels on the image. After you click some pixels and click the `apply quantization` button, the dot texture is applied to a specific layer. This layer is selected by the largest alpha values within each layer corresponding to the selected coordinates, and only the layer with the largest alpha value is used.
 
-img = cv2.imread(img_path)[:, :, [2, 1, 0]]
-size = img.shape[:2]
-vec_img = img.reshape(-1, 3)
-# model = KMeans(n_clusters=num_clusters, n_jobs=-1)
-model = KMeans(n_clusters=num_clusters, init='k-means++')
-pred = model.fit_predict(vec_img)
-pred_img = np.tile(pred.reshape(*size,1), (1,1,3))
-
-center = model.cluster_centers_.reshape(-1)
-print(center)
-```
-
-then output the palette into some predefined format
-
-```python
-# Reshape for an input
-print('img_name = \'%s\';' % img_name, end=" ")
-for k, i in enumerate(model.cluster_centers_):
-    print('manual_color_%d = [' % k + str(i[0].astype('int')) +', '+ str(i[1].astype('int'))+  ', '+ str(i[2].astype('int')) + '];', end=" ")
-```
-
-Paste the output in the configuration cell (should be the 3rd cell). This is the palette you required for segmentation.
-
-#### Segmentation
-
-Before running the script, you also need to modify two files.
-
-1. Modify the file names in `sample.csv` as your input file names
-2. Replace the palette within `palette_7_sample.csv` as your input palette.
-
-You can also use some other files to store your input without changing the given examples. Here is what I did in practice.
-
-1. Create two files `comics.csv` and `palette_7_comics.csv`. Make sure the basename of the first `.csv` file is exactly the same within `palette_7_{basename}.csv`, otherwise an error is raised.
-2. Run the KMeans method mentioned above to get the palette.
-3. Add the path of the comic book pages into the `comics.csv` and add the palette into the `palette_7_comics.csv`.
-4. Modify the variable values within `inference.ipynb`: `csv_path=comics.csv`.
-5. Also remember if your input comic pages are not in the `dataset/test/` directory, then you also need to modify the value of variable `img_path`.
-6. After that, directly run the code, and it should work.
+### Apply multiple textures on different layers
+To apply multiple textures on different layers, first, you need to select textures for some layers. After this, click the `Apply Multiple Dot Patterns!` button, and an image applying different textures on corresponding layers is generated. You can also use dot color, dot strength,  and quantization levels to adjust the style of the dots, while the texture selected in the texture option does not work here.
