@@ -3,7 +3,7 @@
  * based on the coordinates where the mouse is pointed. It provides utilities
  * to interact with and manipulate color layers dynamically.
  * 
- * @author Xiangxiang Wang
+ * @author Arya Faghihy & Xiangxiang Wang
  * @date 2025-04-17
  */
 
@@ -336,6 +336,36 @@ async function get_masked_dots(
     cv.imshow("multi-dot-layer-canvas", rst);
 
     return rst;
+}
+
+function alpha_add(layers)
+{
+    let is_first = false;
+    let result;
+
+    layers.forEach(layer => {
+        const norm_layer = im2norm(layer)
+        const alpha_mat = get_alpha_mat(norm_layer);
+
+        const temp = new cv.Mat();
+        cv.multiply(norm_layer, alpha_mat, temp);
+
+        // if this is the first iteration, need to initialize the 'result' output
+        if (!is_first) {
+            result = temp.clone();
+            is_first = true;
+        }
+        else {
+            cv.add(result, temp, result);
+        }
+
+        // free memory (good ol' C++ <3)
+        norm_layer.delete();
+        alpha_mat.delete();
+        temp.delete();
+    });
+
+    return result;
 }
 
 function merge(dots, layers, dot_color) {
