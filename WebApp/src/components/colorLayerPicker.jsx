@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 
 
 export const imageOptions = [
+    { name: "none", url: "none" },
     { name: '1930s', url: '/sample_30s.png' },
     { name: '1940s', url: '/sample_40s.png' },
     { name: '1970s', url: '/sample_70s.png' },
@@ -562,7 +563,13 @@ function ApplyMultiDots({ paths }) {
 
     const handleFileChange = (event, path) => {
         const file = event.target.value;
-        setFiles(prev => ({ ...prev, [path]: file }));
+        if (file == "none") {
+            delete (files[path]);
+        } else {
+            setFiles(prev => ({ ...prev, [path]: file }));
+        }
+
+        console.log(files);
     };
 
     const apply_dots = async () => {
