@@ -14,7 +14,6 @@ const Slider = ({ label, value, onChange, onMouseUp }) => {
         step={label === "epsilon" ? "0.01" : "1"}
         style={{ color: "blue", width: "100%" }}
       />
-      <p>{label}</p>
     </div>
   );
 };
